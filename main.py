@@ -52,16 +52,21 @@ async def delete_object(object_id: int):
     return {"status": "deleted"}
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import asyncpg
 import os
 import shutil
+
 
 app = FastAPI()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Монтируем статику для фронтенда
+app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
 
 class Item(BaseModel):
     name: str
