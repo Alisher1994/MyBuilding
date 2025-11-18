@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 import asyncpg
 import os
@@ -25,8 +25,13 @@ async def shutdown():
     await app.state.db.close()
 
 @app.get("/", response_class=HTMLResponse)
-def read_root():
-    return """
+async def read_root():
+    # Получаем все записи
+    query = "SELECT id, name, description FROM items;"
+    async with app.state.db.acquire() as connection:
+        rows = await connection.fetch(query)
+    # Формируем HTML-страницу
+    html = """
     <html>
     <body>
     <h2>Загрузка текста и фото</h2>
@@ -35,9 +40,29 @@ def read_root():
       <input name='photo' type='file'><br><br>
       <input type='submit'>
     </form>
+    <h2>Список загруженных записей</h2>
+    <ul>
+    """
+    for row in rows:
+        # Пытаемся извлечь имя файла из description
+        photo = ""
+        if row["description"].startswith("Фото: "):
+            photo = row["description"][6:]
+        if photo:
+            html += f'<li>{row["name"]} — <a href="/uploads/{photo}" target="_blank">{photo}</a></li>'
+        else:
+            html += f'<li>{row["name"]}</li>'
+    html += """
+    </ul>
     </body>
     </html>
     """
+    return html
+# Эндпоинт для отдачи файлов из папки uploads
+@app.get("/uploads/{filename}")
+def get_uploaded_file(filename: str):
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    return FileResponse(file_path)
 
 @app.post("/upload")
 async def upload(name: str = Form(...), photo: UploadFile = File(...)):
