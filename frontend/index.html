@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyBuilding — Объекты</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <span>Объекты</span>
+            <button id="add-object">+</button>
+        </div>
+        <ul id="object-list"></ul>
+    </div>
+    <div class="main-content">
+        <h1>Выберите объект</h1>
+        <div id="object-actions" style="display:none;">
+            <input id="rename-input" type="text" style="display:none;">
+            <button id="rename-btn">Переименовать</button>
+            <button id="delete-btn">Удалить</button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
