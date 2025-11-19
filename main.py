@@ -9,6 +9,7 @@ import os
 import shutil
 from typing import List
 from datetime import date as dtdate
+import re
 
 app = FastAPI()
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -49,12 +50,16 @@ async def add_income(object_id: int, date: str = Form(...), amount: float = Form
         from datetime import date as dtdateclass
         photo_path = None
         if photo:
-            ext = os.path.splitext(photo.filename)[-1]
-            fname = f"income_{object_id}_{int(dtdate.today().strftime('%Y%m%d'))}_{photo.filename}"
+            # sanitize filename
+            orig = os.path.basename(photo.filename)
+            safe = re.sub(r'[^A-Za-z0-9_.-]', '_', orig)
+            fname = f"income_{object_id}_{int(dtdate.today().strftime('%Y%m%d'))}_{safe}"
             dest = os.path.join(UPLOAD_DIR, fname)
             with open(dest, "wb") as f:
                 shutil.copyfileobj(photo.file, f)
             photo_path = f"/uploads/{fname}"
+            # log saved file for debugging
+            print(f"Saved upload: {dest} -> {photo_path}")
         # Преобразуем строку date в объект datetime.date
         try:
             date_obj = dtdateclass.fromisoformat(date)
@@ -91,12 +96,15 @@ async def update_income(object_id: int, income_id: int, date: str = Form(...), a
             old_photo = old["photo"]
     photo_path = old_photo
     if photo:
-        ext = os.path.splitext(photo.filename)[-1]
-        fname = f"income_{object_id}_{int(dtdate.today().strftime('%Y%m%d'))}_{photo.filename}"
+        # sanitize filename for update flow
+        orig = os.path.basename(photo.filename)
+        safe = re.sub(r'[^A-Za-z0-9_.-]', '_', orig)
+        fname = f"income_{object_id}_{int(dtdate.today().strftime('%Y%m%d'))}_{safe}"
         dest = os.path.join(UPLOAD_DIR, fname)
         with open(dest, "wb") as f:
             shutil.copyfileobj(photo.file, f)
         photo_path = f"/uploads/{fname}"
+        print(f"Saved upload (update): {dest} -> {photo_path}")
         # optionally: remove old file
     query = """
         UPDATE incomes SET date=$1, photo=$2, amount=$3, sender=$4, receiver=$5, comment=$6
