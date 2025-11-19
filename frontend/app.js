@@ -5,6 +5,22 @@ async function fetchObjects() {
     return res.json();
 }
 
+function setActiveTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.querySelectorAll('.tab-content').forEach(div => {
+        div.style.display = div.id === 'tab-' + tab ? '' : 'none';
+    });
+}
+
+// Вкладки переключение (инициализация сразу после определения)
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.onclick = () => setActiveTab(btn.dataset.tab);
+    });
+});
+
 async function renderList() {
     const list = document.getElementById('object-list');
     list.innerHTML = '';
