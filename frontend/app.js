@@ -19,7 +19,7 @@ function renderIncomeTable() {
         tr.innerHTML = `
             <td>${idx + 1}</td>
             <td>${row.date}</td>
-            <td>${row.photo ? `<img src="${row.photo}?t=${Date.now()}" class="income-photo-thumb income-photo-view" data-idx="${idx}">` : ''}</td>
+            <td>${row.photo ? `<img src="${row.photo}?t=${Date.now()}" class="income-photo-thumb income-photo-view" data-idx="${idx}" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 fill=%22%23f0f0f0%22/><path d=%22M6 6h12v12H6z%22 fill=%22%23ddd%22/><text x=%2212%22 y=%2216%22 font-size=%226%22 text-anchor=%22middle%22 fill=%22%23999%22>no image</text></svg>';` : ''}</td>
             <td>${row.amount}</td>
             <td>${row.sender || row.from || ''}</td>
             <td>${row.receiver || row.to || ''}</td>

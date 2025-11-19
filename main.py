@@ -44,6 +44,31 @@ async def get_incomes(object_id: int):
         } for row in rows
     ]
 
+
+@app.get('/health')
+async def health():
+    """Simple health check that verifies DB connection."""
+    try:
+        async with app.state.db.acquire() as conn:
+            await conn.fetchval('SELECT 1')
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get('/uploads/list')
+async def uploads_list():
+    """Return a list of files currently present in the uploads directory (diagnostic)."""
+    try:
+        files = []
+        for fn in os.listdir(UPLOAD_DIR):
+            path = os.path.join(UPLOAD_DIR, fn)
+            if os.path.isfile(path):
+                files.append(fn)
+        return {"files": files}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/objects/{object_id}/incomes/")
 async def add_income(object_id: int, date: str = Form(...), amount: float = Form(...), sender: str = Form(...), receiver: str = Form(...), comment: str = Form(""), photo: UploadFile = File(None)):
     try:
