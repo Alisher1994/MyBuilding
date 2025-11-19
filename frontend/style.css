@@ -77,6 +77,7 @@
 
 /* --- Вкладки --- */
 .tabs-header {
+.tabs-header {
     display: flex;
     gap: 0;
     margin-bottom: 0;
@@ -84,6 +85,33 @@
     border-radius: 8px 8px 0 0;
     overflow: hidden;
     box-shadow: 0 1px 4px #0001;
+    align-items: center;
+    position: relative;
+}
+.tab-actions {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    gap: 4px;
+    padding-right: 8px;
+}
+.tab-action-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    margin-left: 2px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+}
+.tab-action-btn:hover {
+    background: #eaf1fb;
+}
+.tab-action-btn svg {
+    display: block;
+}
 }
 .tab-btn {
     background: #f3f3f3;
