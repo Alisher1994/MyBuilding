@@ -19,7 +19,7 @@ function renderIncomeTable() {
         tr.innerHTML = `
             <td>${idx + 1}</td>
             <td>${row.date}</td>
-            <td>${row.photo ? `<img src="${row.photo}" class="income-photo-thumb income-photo-view" data-idx="${idx}">` : ''}</td>
+            <td>${row.photo ? `<img src="${row.photo}?t=${Date.now()}" class="income-photo-thumb income-photo-view" data-idx="${idx}">` : ''}</td>
             <td>${row.amount}</td>
             <td>${row.sender || row.from || ''}</td>
             <td>${row.receiver || row.to || ''}</td>
