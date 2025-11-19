@@ -96,6 +96,27 @@ document.getElementById('income-photo').onchange = function(e) {
     // Предпросмотр не нужен, фото отправляется на сервер
 };
 
+// Закрытие модалки просмотра фото
+const photoModalClose = document.getElementById('photo-modal-close');
+if (photoModalClose) {
+    photoModalClose.onclick = function() {
+        const m = document.getElementById('photo-modal');
+        const img = document.getElementById('photo-modal-img');
+        if (m) m.style.display = 'none';
+        if (img) img.src = '';
+    };
+}
+const photoModal = document.getElementById('photo-modal');
+if (photoModal) {
+    photoModal.onclick = function(e) {
+        if (e.target && e.target.id === 'photo-modal') {
+            const img = document.getElementById('photo-modal-img');
+            photoModal.style.display = 'none';
+            if (img) img.src = '';
+        }
+    };
+}
+
 document.getElementById('income-form').onsubmit = async function(e) {
     e.preventDefault();
     const date = document.getElementById('income-date').value;
