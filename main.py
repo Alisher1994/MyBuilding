@@ -1,7 +1,6 @@
-
 # === Импорты ===
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import asyncpg
@@ -72,4 +71,8 @@ async def delete_object(object_id: int):
     if not row:
         raise HTTPException(status_code=404, detail="Объект не найден")
     return {"status": "deleted"}
+
+@app.get("/")
+def root_redirect():
+    return RedirectResponse(url="/frontend/index.html")
 
