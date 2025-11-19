@@ -1,3 +1,70 @@
+// --- Приход: таблица, модалка, логика ---
+const incomeRows = [];
+
+function renderIncomeTable() {
+    const tbody = document.getElementById('income-tbody');
+    tbody.innerHTML = '';
+    let total = 0;
+    incomeRows.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>${row.date}</td>
+            <td>${row.photo ? `<img src="${row.photo}" class="income-photo-thumb">` : ''}</td>
+            <td>${row.amount}</td>
+            <td>${row.from}</td>
+            <td>${row.to}</td>
+            <td>${row.comment || ''}</td>
+        `;
+        tbody.appendChild(tr);
+        total += Number(row.amount) || 0;
+    });
+    document.getElementById('income-total').textContent = total;
+}
+
+// Открытие модалки
+document.getElementById('add-income').onclick = function() {
+    document.getElementById('income-modal').style.display = 'flex';
+    // Дата по умолчанию сегодня
+    document.getElementById('income-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('income-form').reset();
+    document.getElementById('income-photo').value = '';
+    document.getElementById('income-modal').dataset.photo = '';
+};
+
+// Закрытие модалки
+document.getElementById('income-modal-close').onclick = function() {
+    document.getElementById('income-modal').style.display = 'none';
+};
+
+// Предпросмотр фото (base64)
+document.getElementById('income-photo').onchange = function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+        document.getElementById('income-modal').dataset.photo = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+// Сохранение новой строки
+document.getElementById('income-form').onsubmit = function(e) {
+    e.preventDefault();
+    const date = document.getElementById('income-date').value;
+    const amount = document.getElementById('income-amount').value;
+    const from = document.getElementById('income-from').value;
+    const to = document.getElementById('income-to').value;
+    const comment = document.getElementById('income-comment').value;
+    const photo = document.getElementById('income-modal').dataset.photo || '';
+    incomeRows.push({ date, amount, from, to, comment, photo });
+    renderIncomeTable();
+    document.getElementById('income-modal').style.display = 'none';
+    return false;
+};
+
+// При старте — отрисовать пустую таблицу
+renderIncomeTable();
 let selectedId = null;
 
 async function fetchObjects() {

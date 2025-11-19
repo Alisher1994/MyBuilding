@@ -49,7 +49,50 @@
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3v10m0 0l-4-4m4 4l4-4" stroke="#0057d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="15" width="14" height="2" rx="1" fill="#0057d8"/></svg>
                 </button>
             </div>
-            Данные по приходу
+            <div class="income-table-wrap">
+                <table class="income-table">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Дата</th>
+                            <th>Фото</th>
+                            <th>Сумма (в сумах)</th>
+                            <th>Кто передал</th>
+                            <th>Кто получил</th>
+                            <th>Комментарии</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="income-tbody">
+                        <!-- Строки будут добавляться динамически -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align:right;font-weight:600;">Итого:</td>
+                            <td id="income-total" style="font-weight:600;">0</td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Модальное окно для добавления прихода -->
+        <div id="income-modal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="modal-close" id="income-modal-close">&times;</span>
+                <h3>Добавить приход</h3>
+                <form id="income-form">
+                    <label>Дата:<br><input type="date" id="income-date" required></label><br>
+                    <label>Фото:<br><input type="file" id="income-photo" accept="image/*"></label><br>
+                    <label>Сумма (в сумах):<br><input type="number" id="income-amount" required min="0"></label><br>
+                    <label>Кто передал:<br><input type="text" id="income-from" required></label><br>
+                    <label>Кто получил:<br><input type="text" id="income-to" required></label><br>
+                    <label>Комментарии:<br><textarea id="income-comment"></textarea></label><br>
+                    <button type="submit" class="icon-btn" style="background:#0057d8;color:#fff;">Сохранить</button>
+                </form>
+                <input type="hidden" id="income-edit-index">
+            </div>
         </div>
         <div id="tab-budget" class="tab-content" style="display:none;">
             <div class="tab-actions">
