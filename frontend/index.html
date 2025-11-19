@@ -17,24 +17,27 @@
     </div>
     <button id="sidebar-toggle" class="sidebar-toggle" style="display:none;">☰</button>
     <div class="main-content">
-        <div id="object-actions" style="display:none; justify-content: flex-end; gap: 10px;">
-            <input id="rename-input" type="text" style="display:none;">
-            <button id="rename-btn">Переименовать</button>
-            <button id="delete-btn">Удалить</button>
-        </div>
-        <div id="tabs" style="display:none; margin-top:30px;">
-            <div class="tabs-header">
-                <button class="tab-btn" data-tab="analysis">Анализ</button>
-                <button class="tab-btn" data-tab="income">Приход</button>
-                <button class="tab-btn" data-tab="budget">Бюджет</button>
-                <button class="tab-btn" data-tab="expense">Расход</button>
+        <div id="tabs-actions-row" style="display:none; align-items: center; justify-content: space-between; gap: 10px;">
+            <div id="tabs" style="margin-top:30px;">
+                <div class="tabs-header">
+                    <button class="tab-btn" data-tab="analysis">Анализ</button>
+                    <button class="tab-btn" data-tab="income">Приход</button>
+                    <button class="tab-btn" data-tab="budget">Бюджет</button>
+                    <button class="tab-btn" data-tab="expense">Расход</button>
+                </div>
             </div>
-            <div class="tab-content" id="tab-analysis">Анализ по объекту</div>
-            <div class="tab-content" id="tab-income" style="display:none;">Данные по приходу</div>
-            <div class="tab-content" id="tab-budget" style="display:none;">Данные по бюджету</div>
-            <div class="tab-content" id="tab-expense" style="display:none;">Данные по расходу</div>
+            <div id="object-actions" style="gap: 10px;">
+                <input id="rename-input" type="text" style="display:none;">
+                <button id="rename-btn">Переименовать</button>
+                <button id="delete-btn">Удалить</button>
+            </div>
         </div>
+        <div id="tab-analysis" class="tab-content" style="display:none;">Анализ по объекту</div>
+        <div id="tab-income" class="tab-content" style="display:none;">Данные по приходу</div>
+        <div id="tab-budget" class="tab-content" style="display:none;">Данные по бюджету</div>
+        <div id="tab-expense" class="tab-content" style="display:none;">Данные по расходу</div>
     </div>
+    <button id="sidebar-close" class="sidebar-close" style="display:none;">✕</button>
     <script src="app.js"></script>
 </body>
 </html>
