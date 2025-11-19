@@ -43,30 +43,35 @@ async def get_incomes(object_id: int):
 
 @app.post("/objects/{object_id}/incomes/")
 async def add_income(object_id: int, date: str = Form(...), amount: float = Form(...), sender: str = Form(...), receiver: str = Form(...), comment: str = Form(""), photo: UploadFile = File(None)):
-    photo_path = None
-    if photo:
-        ext = os.path.splitext(photo.filename)[-1]
-        fname = f"income_{object_id}_{int(dtdate.today().strftime('%Y%m%d'))}_{photo.filename}"
-        dest = os.path.join(UPLOAD_DIR, fname)
-        with open(dest, "wb") as f:
-            shutil.copyfileobj(photo.file, f)
-        photo_path = f"/uploads/{fname}"
-    query = """
-        INSERT INTO incomes (object_id, date, photo, amount, sender, receiver, comment)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id, date, photo, amount, sender, receiver, comment;
-    """
-    async with app.state.db.acquire() as connection:
-        row = await connection.fetchrow(query, object_id, date, photo_path, amount, sender, receiver, comment)
-    return {
-        "id": row["id"],
-        "date": row["date"].isoformat() if row["date"] else None,
-        "photo": row["photo"],
-        "amount": float(row["amount"]),
-        "sender": row["sender"],
-        "receiver": row["receiver"],
-        "comment": row["comment"]
-    }
+    try:
+        photo_path = None
+        if photo:
+            ext = os.path.splitext(photo.filename)[-1]
+            fname = f"income_{object_id}_{int(dtdate.today().strftime('%Y%m%d'))}_{photo.filename}"
+            dest = os.path.join(UPLOAD_DIR, fname)
+            with open(dest, "wb") as f:
+                shutil.copyfileobj(photo.file, f)
+            photo_path = f"/uploads/{fname}"
+        query = """
+            INSERT INTO incomes (object_id, date, photo, amount, sender, receiver, comment)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id, date, photo, amount, sender, receiver, comment;
+        """
+        async with app.state.db.acquire() as connection:
+            row = await connection.fetchrow(query, object_id, date, photo_path, amount, sender, receiver, comment)
+        return {
+            "id": row["id"],
+            "date": row["date"].isoformat() if row["date"] else None,
+            "photo": row["photo"],
+            "amount": float(row["amount"]),
+            "sender": row["sender"],
+            "receiver": row["receiver"],
+            "comment": row["comment"]
+        }
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        raise HTTPException(status_code=500, detail=f"{e}\n{tb}")
 
 @app.put("/objects/{object_id}/incomes/{income_id}")
 async def update_income(object_id: int, income_id: int, date: str = Form(...), amount: float = Form(...), sender: str = Form(...), receiver: str = Form(...), comment: str = Form(""), photo: UploadFile = File(None)):
