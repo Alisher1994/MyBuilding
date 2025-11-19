@@ -104,6 +104,11 @@ document.getElementById('income-form').onsubmit = async function(e) {
     const receiver = document.getElementById('income-to').value;
     const comment = document.getElementById('income-comment').value;
     const photoInput = document.getElementById('income-photo');
+    // Валидация обязательных полей
+    if (!date || !amount || isNaN(Number(amount))) {
+        alert('Заполните дату и сумму (число)');
+        return false;
+    }
     const formData = new FormData();
     formData.append('date', date);
     formData.append('amount', amount);
@@ -113,16 +118,27 @@ document.getElementById('income-form').onsubmit = async function(e) {
     if (photoInput.files[0]) {
         formData.append('photo', photoInput.files[0]);
     }
-    if (editingIncomeId) {
-        await fetch(`/objects/${selectedId}/incomes/${editingIncomeId}`, {
-            method: 'PUT',
-            body: formData
-        });
-    } else {
-        await fetch(`/objects/${selectedId}/incomes/`, {
-            method: 'POST',
-            body: formData
-        });
+    let response;
+    try {
+        if (editingIncomeId) {
+            response = await fetch(`/objects/${selectedId}/incomes/${editingIncomeId}`, {
+                method: 'PUT',
+                body: formData
+            });
+        } else {
+            response = await fetch(`/objects/${selectedId}/incomes/`, {
+                method: 'POST',
+                body: formData
+            });
+        }
+        if (!response.ok) {
+            const err = await response.text();
+            alert('Ошибка: ' + err);
+            return false;
+        }
+    } catch (err) {
+        alert('Ошибка сети: ' + err);
+        return false;
     }
     document.getElementById('income-modal').style.display = 'none';
     await loadIncomes();
