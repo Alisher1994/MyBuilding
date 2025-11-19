@@ -161,6 +161,10 @@ function setActiveTab(tab) {
     document.querySelectorAll('.tab-content').forEach(div => {
         div.style.display = div.id === 'tab-' + tab ? '' : 'none';
     });
+    // Если выбрана вкладка "приход" — обновить данные
+    if (tab === 'income') {
+        loadIncomes();
+    }
 }
 
 // Вкладки переключение (инициализация сразу после определения)
@@ -193,7 +197,8 @@ function selectObject(id, li) {
     document.querySelectorAll('#object-list li').forEach(el => el.classList.remove('selected'));
     li.classList.add('selected');
     showTabs(true);
-    setActiveTab('analysis');
+    setActiveTab('income'); // Сразу показываем вкладку "приход"
+    loadIncomes(); // Загружаем приходы для выбранного объекта
 }
 
 function clearSelection() {
