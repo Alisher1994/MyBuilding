@@ -35,21 +35,20 @@ async function renderList() {
 }
 
 function showTabs(show) {
-    document.getElementById('tabs').style.display = show ? '' : 'none';
+    document.getElementById('tabs-actions-row').style.display = show ? 'flex' : 'none';
+    document.querySelectorAll('.tab-content').forEach(div => div.style.display = 'none');
 }
 
 function selectObject(id, li) {
     selectedId = id;
     document.querySelectorAll('#object-list li').forEach(el => el.classList.remove('selected'));
     li.classList.add('selected');
-    document.getElementById('object-actions').style.display = '';
     showTabs(true);
-    setActiveTab && setActiveTab('analysis');
+    setActiveTab('analysis');
 }
 
 function clearSelection() {
     selectedId = null;
-    document.getElementById('object-actions').style.display = 'none';
     showTabs(false);
     document.querySelectorAll('#object-list li').forEach(el => el.classList.remove('selected'));
 }
