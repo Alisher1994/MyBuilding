@@ -1,3 +1,21 @@
+
+# === Импорты и инициализация приложения ===
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+import asyncpg
+import os
+import shutil
+from typing import List
+from datetime import date as dtdate
+
+app = FastAPI()
+DATABASE_URL = os.getenv("DATABASE_URL")
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+
 # === Модели для приходов ===
 class IncomeIn(BaseModel):
     date: str
@@ -5,11 +23,6 @@ class IncomeIn(BaseModel):
     sender: str
     receiver: str
     comment: str = ""
-
-# === API для приходов ===
-from fastapi import Depends
-from typing import List
-from datetime import date as dtdate
 
 @app.get("/objects/{object_id}/incomes/")
 async def get_incomes(object_id: int):
@@ -99,24 +112,6 @@ async def delete_income(object_id: int, income_id: int):
     if not row:
         raise HTTPException(status_code=404, detail="Строка не найдена")
     return {"status": "deleted"}
-# === Импорты ===
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-import asyncpg
-import os
-import shutil
-
-# === Инициализация приложения ===
-app = FastAPI()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-# Монтируем статику для фронтенда
-app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
 
 # === API для объектов ===
 @app.on_event("startup")
