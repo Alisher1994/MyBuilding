@@ -1,3 +1,104 @@
+# === Модели для приходов ===
+class IncomeIn(BaseModel):
+    date: str
+    amount: float
+    sender: str
+    receiver: str
+    comment: str = ""
+
+# === API для приходов ===
+from fastapi import Depends
+from typing import List
+from datetime import date as dtdate
+
+@app.get("/objects/{object_id}/incomes/")
+async def get_incomes(object_id: int):
+    query = "SELECT id, date, photo, amount, sender, receiver, comment FROM incomes WHERE object_id=$1 ORDER BY id;"
+    async with app.state.db.acquire() as connection:
+        rows = await connection.fetch(query, object_id)
+    return [
+        {
+            "id": row["id"],
+            "date": row["date"].isoformat() if row["date"] else None,
+            "photo": row["photo"],
+            "amount": float(row["amount"]),
+            "sender": row["sender"],
+            "receiver": row["receiver"],
+            "comment": row["comment"]
+        } for row in rows
+    ]
+
+@app.post("/objects/{object_id}/incomes/")
+async def add_income(object_id: int, date: str = Form(...), amount: float = Form(...), sender: str = Form(...), receiver: str = Form(...), comment: str = Form(""), photo: UploadFile = File(None)):
+    photo_path = None
+    if photo:
+        ext = os.path.splitext(photo.filename)[-1]
+        fname = f"income_{object_id}_{int(dtdate.today().strftime('%Y%m%d'))}_{photo.filename}"
+        dest = os.path.join(UPLOAD_DIR, fname)
+        with open(dest, "wb") as f:
+            shutil.copyfileobj(photo.file, f)
+        photo_path = f"/uploads/{fname}"
+    query = """
+        INSERT INTO incomes (object_id, date, photo, amount, sender, receiver, comment)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, date, photo, amount, sender, receiver, comment;
+    """
+    async with app.state.db.acquire() as connection:
+        row = await connection.fetchrow(query, object_id, date, photo_path, amount, sender, receiver, comment)
+    return {
+        "id": row["id"],
+        "date": row["date"].isoformat() if row["date"] else None,
+        "photo": row["photo"],
+        "amount": float(row["amount"]),
+        "sender": row["sender"],
+        "receiver": row["receiver"],
+        "comment": row["comment"]
+    }
+
+@app.put("/objects/{object_id}/incomes/{income_id}")
+async def update_income(object_id: int, income_id: int, date: str = Form(...), amount: float = Form(...), sender: str = Form(...), receiver: str = Form(...), comment: str = Form(""), photo: UploadFile = File(None)):
+    # Получаем старую запись для удаления старого фото, если нужно
+    old_photo = None
+    async with app.state.db.acquire() as connection:
+        old = await connection.fetchrow("SELECT photo FROM incomes WHERE id=$1 AND object_id=$2", income_id, object_id)
+        if old:
+            old_photo = old["photo"]
+    photo_path = old_photo
+    if photo:
+        ext = os.path.splitext(photo.filename)[-1]
+        fname = f"income_{object_id}_{int(dtdate.today().strftime('%Y%m%d'))}_{photo.filename}"
+        dest = os.path.join(UPLOAD_DIR, fname)
+        with open(dest, "wb") as f:
+            shutil.copyfileobj(photo.file, f)
+        photo_path = f"/uploads/{fname}"
+        # optionally: remove old file
+    query = """
+        UPDATE incomes SET date=$1, photo=$2, amount=$3, sender=$4, receiver=$5, comment=$6
+        WHERE id=$7 AND object_id=$8
+        RETURNING id, date, photo, amount, sender, receiver, comment;
+    """
+    async with app.state.db.acquire() as connection:
+        row = await connection.fetchrow(query, date, photo_path, amount, sender, receiver, comment, income_id, object_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Строка не найдена")
+    return {
+        "id": row["id"],
+        "date": row["date"].isoformat() if row["date"] else None,
+        "photo": row["photo"],
+        "amount": float(row["amount"]),
+        "sender": row["sender"],
+        "receiver": row["receiver"],
+        "comment": row["comment"]
+    }
+
+@app.delete("/objects/{object_id}/incomes/{income_id}")
+async def delete_income(object_id: int, income_id: int):
+    query = "DELETE FROM incomes WHERE id=$1 AND object_id=$2 RETURNING id;"
+    async with app.state.db.acquire() as connection:
+        row = await connection.fetchrow(query, income_id, object_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Строка не найдена")
+    return {"status": "deleted"}
 # === Импорты ===
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse

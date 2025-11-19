@@ -1,5 +1,14 @@
-// --- Приход: таблица, модалка, логика ---
-const incomeRows = [];
+
+// --- Приход: таблица, модалка, логика через API ---
+let incomeRows = [];
+let editingIncomeId = null;
+
+async function loadIncomes() {
+    if (!selectedId) return;
+    const res = await fetch(`/objects/${selectedId}/incomes/`);
+    incomeRows = await res.json();
+    renderIncomeTable();
+}
 
 function renderIncomeTable() {
     const tbody = document.getElementById('income-tbody');
@@ -10,56 +19,113 @@ function renderIncomeTable() {
         tr.innerHTML = `
             <td>${idx + 1}</td>
             <td>${row.date}</td>
-            <td>${row.photo ? `<img src="${row.photo}" class="income-photo-thumb">` : ''}</td>
+            <td>${row.photo ? `<img src="${row.photo}" class="income-photo-thumb income-photo-view" data-idx="${idx}">` : ''}</td>
             <td>${row.amount}</td>
-            <td>${row.from}</td>
-            <td>${row.to}</td>
+            <td>${row.sender || row.from || ''}</td>
+            <td>${row.receiver || row.to || ''}</td>
             <td>${row.comment || ''}</td>
+            <td>
+                <button class="icon-btn income-edit" title="Изменить" data-idx="${idx}">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M4 13.5V16h2.5l7.1-7.1-2.5-2.5L4 13.5z" stroke="#0057d8" stroke-width="1.5"/><path d="M13.5 6.5l2 2" stroke="#0057d8" stroke-width="1.5" stroke-linecap="round"/></svg>
+                </button>
+                <button class="icon-btn income-delete" title="Удалить" data-idx="${idx}">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="5" y="8" width="10" height="7" rx="2" stroke="#d80027" stroke-width="1.5"/><path d="M8 10v3M12 10v3" stroke="#d80027" stroke-width="1.5" stroke-linecap="round"/><rect x="8" y="4" width="4" height="2" rx="1" fill="#d80027"/></svg>
+                </button>
+            </td>
         `;
         tbody.appendChild(tr);
         total += Number(row.amount) || 0;
     });
     document.getElementById('income-total').textContent = total;
+
+    // Кнопки удалить
+    tbody.querySelectorAll('.income-delete').forEach(btn => {
+        btn.onclick = async function() {
+            const idx = Number(btn.dataset.idx);
+            const row = incomeRows[idx];
+            if (confirm('Удалить эту строку?')) {
+                await fetch(`/objects/${selectedId}/incomes/${row.id}`, { method: 'DELETE' });
+                await loadIncomes();
+            }
+        };
+    });
+    // Кнопки редактировать
+    tbody.querySelectorAll('.income-edit').forEach(btn => {
+        btn.onclick = function() {
+            const idx = Number(btn.dataset.idx);
+            const row = incomeRows[idx];
+            document.getElementById('income-date').value = row.date;
+            document.getElementById('income-amount').value = row.amount;
+            document.getElementById('income-from').value = row.sender || row.from || '';
+            document.getElementById('income-to').value = row.receiver || row.to || '';
+            document.getElementById('income-comment').value = row.comment;
+            document.getElementById('income-edit-index').value = idx;
+            document.getElementById('income-modal').dataset.photo = row.photo || '';
+            editingIncomeId = row.id;
+            document.getElementById('income-modal').style.display = 'flex';
+        };
+    });
+    // Просмотр фото
+    tbody.querySelectorAll('.income-photo-view').forEach(img => {
+        img.onclick = function() {
+            const idx = Number(img.dataset.idx);
+            const row = incomeRows[idx];
+            if (row.photo) {
+                document.getElementById('photo-modal-img').src = row.photo;
+                document.getElementById('photo-modal').style.display = 'flex';
+            }
+        };
+    });
 }
 
-// Открытие модалки
 document.getElementById('add-income').onclick = function() {
     document.getElementById('income-modal').style.display = 'flex';
-    // Дата по умолчанию сегодня
-    document.getElementById('income-date').value = new Date().toISOString().slice(0,10);
     document.getElementById('income-form').reset();
     document.getElementById('income-photo').value = '';
     document.getElementById('income-modal').dataset.photo = '';
+    document.getElementById('income-edit-index').value = '';
+    document.getElementById('income-date').value = new Date().toISOString().slice(0,10);
+    editingIncomeId = null;
 };
 
-// Закрытие модалки
 document.getElementById('income-modal-close').onclick = function() {
     document.getElementById('income-modal').style.display = 'none';
 };
 
-// Предпросмотр фото (base64)
 document.getElementById('income-photo').onchange = function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-        document.getElementById('income-modal').dataset.photo = ev.target.result;
-    };
-    reader.readAsDataURL(file);
+    // Предпросмотр не нужен, фото отправляется на сервер
 };
 
-// Сохранение новой строки
-document.getElementById('income-form').onsubmit = function(e) {
+document.getElementById('income-form').onsubmit = async function(e) {
     e.preventDefault();
     const date = document.getElementById('income-date').value;
     const amount = document.getElementById('income-amount').value;
-    const from = document.getElementById('income-from').value;
-    const to = document.getElementById('income-to').value;
+    const sender = document.getElementById('income-from').value;
+    const receiver = document.getElementById('income-to').value;
     const comment = document.getElementById('income-comment').value;
-    const photo = document.getElementById('income-modal').dataset.photo || '';
-    incomeRows.push({ date, amount, from, to, comment, photo });
-    renderIncomeTable();
+    const photoInput = document.getElementById('income-photo');
+    const formData = new FormData();
+    formData.append('date', date);
+    formData.append('amount', amount);
+    formData.append('sender', sender);
+    formData.append('receiver', receiver);
+    formData.append('comment', comment);
+    if (photoInput.files[0]) {
+        formData.append('photo', photoInput.files[0]);
+    }
+    if (editingIncomeId) {
+        await fetch(`/objects/${selectedId}/incomes/${editingIncomeId}`, {
+            method: 'PUT',
+            body: formData
+        });
+    } else {
+        await fetch(`/objects/${selectedId}/incomes/`, {
+            method: 'POST',
+            body: formData
+        });
+    }
     document.getElementById('income-modal').style.display = 'none';
+    await loadIncomes();
     return false;
 };
 
