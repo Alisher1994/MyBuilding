@@ -44,6 +44,7 @@ async def get_incomes(object_id: int):
 @app.post("/objects/{object_id}/incomes/")
 async def add_income(object_id: int, date: str = Form(...), amount: float = Form(...), sender: str = Form(...), receiver: str = Form(...), comment: str = Form(""), photo: UploadFile = File(None)):
     try:
+        from datetime import date as dtdateclass
         photo_path = None
         if photo:
             ext = os.path.splitext(photo.filename)[-1]
@@ -52,13 +53,18 @@ async def add_income(object_id: int, date: str = Form(...), amount: float = Form
             with open(dest, "wb") as f:
                 shutil.copyfileobj(photo.file, f)
             photo_path = f"/uploads/{fname}"
+        # Преобразуем строку date в объект datetime.date
+        try:
+            date_obj = dtdateclass.fromisoformat(date)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Некорректный формат даты (ожидается YYYY-MM-DD)")
         query = """
             INSERT INTO incomes (object_id, date, photo, amount, sender, receiver, comment)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING id, date, photo, amount, sender, receiver, comment;
         """
         async with app.state.db.acquire() as connection:
-            row = await connection.fetchrow(query, object_id, date, photo_path, amount, sender, receiver, comment)
+            row = await connection.fetchrow(query, object_id, date_obj, photo_path, amount, sender, receiver, comment)
         return {
             "id": row["id"],
             "date": row["date"].isoformat() if row["date"] else None,
