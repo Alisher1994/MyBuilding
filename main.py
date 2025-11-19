@@ -14,7 +14,9 @@ app = FastAPI()
 DATABASE_URL = os.getenv("DATABASE_URL")
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 app.mount("/frontend", StaticFiles(directory="frontend"), name="frontend")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # === Модели для приходов ===
 class IncomeIn(BaseModel):
