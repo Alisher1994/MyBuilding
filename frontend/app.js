@@ -18,11 +18,24 @@ async function renderList() {
     });
 }
 
+function showTabs(show) {
+    document.getElementById('tabs').style.display = show ? '' : 'none';
+}
+
 function selectObject(id, li) {
     selectedId = id;
     document.querySelectorAll('#object-list li').forEach(el => el.classList.remove('selected'));
     li.classList.add('selected');
     document.getElementById('object-actions').style.display = '';
+    showTabs(true);
+    setActiveTab && setActiveTab('analysis');
+}
+
+function clearSelection() {
+    selectedId = null;
+    document.getElementById('object-actions').style.display = 'none';
+    showTabs(false);
+    document.querySelectorAll('#object-list li').forEach(el => el.classList.remove('selected'));
 }
 
 document.getElementById('add-object').onclick = async () => {
@@ -52,9 +65,10 @@ document.getElementById('delete-btn').onclick = async () => {
     if (!selectedId) return;
     if (!confirm('Удалить объект?')) return;
     await fetch(`/objects/${selectedId}`, { method: 'DELETE' });
-    selectedId = null;
-    document.getElementById('object-actions').style.display = 'none';
+    clearSelection();
     renderList();
 };
 
+// При старте скрываем вкладки и кнопки
+clearSelection();
 renderList();
