@@ -1,7 +1,7 @@
 
 # === Импорты и инициализация приложения ===
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends
-from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import asyncpg
@@ -192,4 +192,31 @@ async def delete_object(object_id: int):
 @app.get("/")
 def root_redirect():
     return RedirectResponse(url="/frontend/index.html")
+
+
+@app.get('/health')
+async def health():
+    """Простая проверка состояния приложения и доступности БД"""
+    try:
+        # проверяем подключение к базе
+        async with app.state.db.acquire() as conn:
+            await conn.fetchval('SELECT 1')
+        return JSONResponse({'status': 'ok', 'db': 'ok'})
+    except Exception as e:
+        return JSONResponse({'status': 'error', 'detail': str(e)}, status_code=500)
+
+
+@app.get('/uploads/list')
+async def uploads_list():
+    """Возвращает список файлов в папке uploads (диагностика)."""
+    try:
+        files = []
+        for name in os.listdir(UPLOAD_DIR):
+            # только файлы
+            path = os.path.join(UPLOAD_DIR, name)
+            if os.path.isfile(path):
+                files.append({'name': name, 'url': f'/uploads/{name}'})
+        return {'files': files}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
