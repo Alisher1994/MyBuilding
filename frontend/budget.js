@@ -3,17 +3,44 @@
 let budgetData = []; // Полное дерево: stages -> work_types -> resources
 let selectedObjectId = null;
 
-// Типы ресурсов с цветами и иконками
+// Типы ресурсов с цветами и SVG иконками
 const RESOURCE_TYPES = {
-    'Трудоресурсы': { color: '#9C27B0', letter: 'Т' },
-    'Материал': { color: '#8BC34A', letter: 'М' },
-    'Доставка': { color: '#2196F3', letter: 'Д' },
-    'Оборудование': { color: '#673AB7', letter: 'О' },
-    'Мебель': { color: '#00BCD4', letter: 'М' },
-    'Инструменты': { color: '#4CAF50', letter: 'И' },
-    'Коммуналка': { color: '#E91E63', letter: 'К' },
-    'Документация': { color: '#FF9800', letter: 'Д' },
-    'Расходные материалы': { color: '#FFEB3B', letter: 'Р' }
+    'Трудоресурсы': {
+        color: '#9C27B0',
+        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>'
+    },
+    'Материал': {
+        color: '#8BC34A',
+        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>'
+    },
+    'Доставка': {
+        color: '#2196F3',
+        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 18.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm1.5-9H17V12h4.46L19.5 9.5zM6 18.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zM20 8l3 4v5h-2c0 1.66-1.34 3-3 3s-3-1.34-3-3H9c0 1.66-1.34 3-3 3s-3-1.34-3-3H1V6c0-1.1.9-2 2-2h14v4h3zM3 6v9h.76c.55-.61 1.35-1 2.24-1 .89 0 1.69.39 2.24 1H15V6H3z"/></svg>'
+    },
+    'Оборудование': {
+        color: '#673AB7',
+        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>'
+    },
+    'Мебель': {
+        color: '#00BCD4',
+        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V7H1v10h22V7h-2v6h-2z"/><path d="M19 10h-2v3h2v-3z"/></svg>'
+    },
+    'Инструменты': {
+        color: '#4CAF50',
+        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>'
+    },
+    'Коммуналка': {
+        color: '#E91E63',
+        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.84L18 11v8h-2v-6H8v6H6v-8l6-5.16z"/></svg>'
+    },
+    'Документация': {
+        color: '#FF9800',
+        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>'
+    },
+    'Расходные материалы': {
+        color: '#FFEB3B',
+        icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>'
+    }
 };
 
 const RESOURCE_TYPE_NAMES = Object.keys(RESOURCE_TYPES);
@@ -86,7 +113,7 @@ function createStageElement(stage, stageIdx, startWorkTypeNum) {
     const header = document.createElement('div');
     header.className = 'budget-stage-header';
     header.innerHTML = `
-        <span class="collapse-btn" data-stage-id="${stage.id}">${stage.collapsed ? '❯' : '❮'}</span>
+        <span class="collapse-btn" title="Свернуть/развернуть">${stage.collapsed ? '❯' : '▼'}</span>
         <span class="stage-name editable" data-stage-id="${stage.id}" data-field="name">${stage.name}</span>
         <span class="stage-sum">${formatNum(stageSum)} сум</span>
         <button class="btn-icon btn-add" data-stage-id="${stage.id}" title="Добавить вид работ">+</button>
@@ -97,7 +124,9 @@ function createStageElement(stage, stageIdx, startWorkTypeNum) {
     // Контейнер для видов работ
     const workTypesContainer = document.createElement('div');
     workTypesContainer.className = 'budget-work-types-container';
-    workTypesContainer.style.display = stage.collapsed ? 'none' : 'block';
+    if (stage.collapsed) {
+        workTypesContainer.classList.add('collapsed');
+    }
 
     let workTypeNum = startWorkTypeNum;
     stage.work_types.forEach((wt, wtIdx) => {
@@ -129,7 +158,7 @@ function createWorkTypeElement(workType, num, stageId) {
     header.className = 'budget-work-type-header';
     header.innerHTML = `
         <span class="wt-num">${num}.</span>
-        <span class="collapse-btn" data-wt-id="${workType.id}">${workType.collapsed ? '❯' : '❮'}</span>
+        <span class="collapse-btn" title="Свернуть/развернуть">${workType.collapsed ? '❯' : '▼'}</span>
         <span class="wt-name editable" data-wt-id="${workType.id}" data-field="name">${workType.name}</span>
         <span class="wt-unit editable-select" data-wt-id="${workType.id}" data-field="unit">${workType.unit}</span>
         <span class="wt-quantity editable" data-wt-id="${workType.id}" data-field="quantity">${formatNum(workType.quantity)}</span>
@@ -143,7 +172,9 @@ function createWorkTypeElement(workType, num, stageId) {
     // Контейнер для ресурсов
     const resourcesContainer = document.createElement('div');
     resourcesContainer.className = 'budget-resources-container';
-    resourcesContainer.style.display = workType.collapsed ? 'none' : 'block';
+    if (workType.collapsed) {
+        resourcesContainer.classList.add('collapsed');
+    }
 
     // Добавляем заголовок таблицы ресурсов
     if (workType.resources.length > 0) {
@@ -187,7 +218,7 @@ function createResourceElement(resource, workTypeNum, resNum, workTypeId) {
 
     const resSum = resource.quantity * resource.price;
     const resType = RESOURCE_TYPES[resource.resource_type] || RESOURCE_TYPES['Материал'];
-    const resIcon = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${resource.resource_type}">${resType.letter}</div>`;
+    const resIcon = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${resource.resource_type}">${resType.icon}</div>`;
 
     div.innerHTML = `
         <span class="res-num">${workTypeNum}.${resNum}</span>
@@ -494,7 +525,7 @@ function makeEditableSelectWithIcons(element, options, onSave) {
             const option = document.createElement('option');
             option.value = opt;
             const resType = RESOURCE_TYPES[opt];
-            option.textContent = `${resType.letter} - ${opt}`;
+            option.textContent = opt;
             if (opt === currentValue) option.selected = true;
             select.appendChild(option);
         });
@@ -505,13 +536,13 @@ function makeEditableSelectWithIcons(element, options, onSave) {
                 await onSave(newValue);
             }
             const resType = RESOURCE_TYPES[newValue || currentValue];
-            element.innerHTML = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${newValue || currentValue}">${resType.letter}</div>`;
+            element.innerHTML = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${newValue || currentValue}">${resType.icon}</div>`;
         };
 
         select.onblur = function () {
             const newValue = select.value || currentValue;
             const resType = RESOURCE_TYPES[newValue];
-            element.innerHTML = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${newValue}">${resType.letter}</div>`;
+            element.innerHTML = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${newValue}">${resType.icon}</div>`;
         };
 
         const iconHtml = element.innerHTML;
@@ -523,16 +554,17 @@ function makeEditableSelectWithIcons(element, options, onSave) {
 
 // Drag and Drop
 let draggedElement = null;
-let draggedType = null;
+let draggedType = null; // 'stage', 'work-type', 'resource'
 
 function setupDragDrop(element, type) {
     element.addEventListener('dragstart', (e) => {
         draggedElement = element;
         draggedType = type;
         element.classList.add('dragging');
+        e.stopPropagation();
     });
 
-    element.addEventListener('dragend', (e) => {
+    element.addEventListener('dragend', () => {
         element.classList.remove('dragging');
         draggedElement = null;
         draggedType = null;
@@ -540,21 +572,35 @@ function setupDragDrop(element, type) {
 
     element.addEventListener('dragover', (e) => {
         e.preventDefault();
-        if (draggedType === type) {
-            const afterElement = getDragAfterElement(element.parentElement, e.clientY);
-            if (afterElement == null) {
-                element.parentElement.appendChild(draggedElement);
-            } else {
-                element.parentElement.insertBefore(draggedElement, afterElement);
-            }
+        e.stopPropagation();
+        const container = element.parentElement;
+        const afterElement = getDragAfterElement(container, e.clientY);
+        if (afterElement == null) {
+            container.appendChild(draggedElement);
+        } else {
+            container.insertBefore(draggedElement, afterElement);
         }
     });
 
     element.addEventListener('drop', async (e) => {
         e.preventDefault();
-        if (draggedType === type) {
-            await handleDrop(type);
+        e.stopPropagation();
+
+        // Сохраняем новый порядок
+        if (draggedType === 'stage') {
+            const stageIds = [...document.querySelectorAll('.budget-stage')].map(el => el.dataset.stageId);
+            await reorderStages(stageIds);
+        } else if (draggedType === 'work-type') {
+            // TODO: Реализовать перетаскивание видов работ между этапами (пока только внутри этапа)
+            // Для простоты пока считаем что перетаскиваем только внутри одного контейнера
+        } else if (draggedType === 'resource') {
+            const workTypeId = element.dataset.workTypeId;
+            const resourceIds = [...element.parentElement.querySelectorAll('.budget-resource')].map(el => el.dataset.resourceId);
+            await reorderResources(workTypeId, resourceIds);
         }
+
+        // Перезагружаем чтобы обновить нумерацию
+        await loadBudget(selectedObjectId);
     });
 }
 
@@ -573,30 +619,7 @@ function getDragAfterElement(container, y) {
     }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
-async function handleDrop(type) {
-    if (type === 'stage') {
-        const stages = [...document.querySelectorAll('.budget-stage')];
-        const stageIds = stages.map(s => parseInt(s.dataset.stageId));
-        await reorderStages(stageIds);
-    } else if (type === 'work-type') {
-        const container = draggedElement.parentElement;
-        const workTypes = [...container.querySelectorAll('.budget-work-type')];
-        const workTypeIds = workTypes.map(wt => parseInt(wt.dataset.workTypeId));
-        const stageId = parseInt(draggedElement.dataset.stageId);
-        await reorderWorkTypes(stageId, workTypeIds);
-    } else if (type === 'resource') {
-        const container = draggedElement.parentElement;
-        const resources = [...container.querySelectorAll('.budget-resource')];
-        const resourceIds = resources.map(r => parseInt(r.dataset.resourceId));
-        const workTypeId = parseInt(draggedElement.dataset.workTypeId);
-        await reorderResources(workTypeId, resourceIds);
-    }
-
-    await loadBudget(selectedObjectId);
-}
-
-// === API CALLS ===
-
+// API Calls
 async function updateStage(stageId, data) {
     const res = await fetch(`/objects/${selectedObjectId}/budget/stages/${stageId}`, {
         method: 'PUT',
@@ -604,22 +627,6 @@ async function updateStage(stageId, data) {
         body: JSON.stringify(data)
     });
     if (!res.ok) throw new Error('Failed to update stage');
-}
-
-async function deleteStage(stageId) {
-    const res = await fetch(`/objects/${selectedObjectId}/budget/stages/${stageId}`, {
-        method: 'DELETE'
-    });
-    if (!res.ok) throw new Error('Failed to delete stage');
-}
-
-async function addWorkType(stageId) {
-    const res = await fetch(`/budget/stages/${stageId}/work-types/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'Новый вид работ' })
-    });
-    if (!res.ok) throw new Error('Failed to add work type');
 }
 
 async function updateWorkType(workTypeId, data) {
@@ -631,11 +638,26 @@ async function updateWorkType(workTypeId, data) {
     if (!res.ok) throw new Error('Failed to update work type');
 }
 
-async function deleteWorkType(workTypeId) {
-    const res = await fetch(`/budget/work-types/${workTypeId}`, {
-        method: 'DELETE'
+async function updateResource(resourceId, data) {
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(data)) {
+        formData.append(key, value);
+    }
+
+    const res = await fetch(`/budget/resources/${resourceId}`, {
+        method: 'PUT',
+        body: formData
     });
-    if (!res.ok) throw new Error('Failed to delete work type');
+    if (!res.ok) throw new Error('Failed to update resource');
+}
+
+async function addWorkType(stageId) {
+    const res = await fetch(`/budget/stages/${stageId}/work-types/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Новый вид работ' })
+    });
+    if (!res.ok) throw new Error('Failed to add work type');
 }
 
 async function addResource(workTypeId) {
@@ -654,17 +676,18 @@ async function addResource(workTypeId) {
     if (!res.ok) throw new Error('Failed to add resource');
 }
 
-async function updateResource(resourceId, data) {
-    const formData = new FormData();
-    for (const [key, value] of Object.entries(data)) {
-        formData.append(key, value);
-    }
-
-    const res = await fetch(`/budget/resources/${resourceId}`, {
-        method: 'PUT',
-        body: formData
+async function deleteStage(stageId) {
+    const res = await fetch(`/objects/${selectedObjectId}/budget/stages/${stageId}`, {
+        method: 'DELETE'
     });
-    if (!res.ok) throw new Error('Failed to update resource');
+    if (!res.ok) throw new Error('Failed to delete stage');
+}
+
+async function deleteWorkType(workTypeId) {
+    const res = await fetch(`/budget/work-types/${workTypeId}`, {
+        method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to delete work type');
 }
 
 async function deleteResource(resourceId) {
@@ -672,17 +695,6 @@ async function deleteResource(resourceId) {
         method: 'DELETE'
     });
     if (!res.ok) throw new Error('Failed to delete resource');
-}
-
-async function uploadResourcePhoto(resourceId, file) {
-    const formData = new FormData();
-    formData.append('photo', file);
-
-    const res = await fetch(`/budget/resources/${resourceId}`, {
-        method: 'PUT',
-        body: formData
-    });
-    if (!res.ok) throw new Error('Failed to upload photo');
 }
 
 async function reorderStages(stageIds) {
@@ -694,15 +706,6 @@ async function reorderStages(stageIds) {
     if (!res.ok) throw new Error('Failed to reorder stages');
 }
 
-async function reorderWorkTypes(stageId, workTypeIds) {
-    const res = await fetch(`/budget/stages/${stageId}/work-types/reorder`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ work_type_ids: workTypeIds })
-    });
-    if (!res.ok) throw new Error('Failed to reorder work types');
-}
-
 async function reorderResources(workTypeId, resourceIds) {
     const res = await fetch(`/budget/work-types/${workTypeId}/resources/reorder`, {
         method: 'POST',
@@ -712,22 +715,13 @@ async function reorderResources(workTypeId, resourceIds) {
     if (!res.ok) throw new Error('Failed to reorder resources');
 }
 
-// === INITIALIZATION ===
+async function uploadResourcePhoto(resourceId, file) {
+    const formData = new FormData();
+    formData.append('photo', file);
 
-// Добавить этап
-document.getElementById('add-budget-group')?.addEventListener('click', async () => {
-    if (!selectedObjectId) return;
-
-    const res = await fetch(`/objects/${selectedObjectId}/budget/stages/`, {
+    const res = await fetch(`/budget/resources/${resourceId}/photo`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'Новый этап' })
+        body: formData
     });
-
-    if (res.ok) {
-        await loadBudget(selectedObjectId);
-    }
-});
-
-// Экспорт функции для вызова из app.js
-window.loadBudget = loadBudget;
+    if (!res.ok) throw new Error('Failed to upload photo');
+}

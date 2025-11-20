@@ -100,30 +100,40 @@
     border-color: #bbb;
 }
 
-.btn-add {
-    color: #0067c0;
-    font-weight: 700;
-    border-color: #0067c0;
+/* Unified Button Colors */
+.btn-add,
+.btn-delete {
+    color: #888;
+    border-color: #ccc;
 }
 
 .btn-add:hover {
     background: #e5f3ff;
+    color: #0067c0;
     border-color: #0067c0;
-}
-
-.btn-delete {
-    color: #d80027;
-    border-color: #d80027;
 }
 
 .btn-delete:hover {
     background: #ffe5e5;
+    color: #d80027;
     border-color: #d80027;
 }
 
 /* Work Type (Вид работ) */
 .budget-work-types-container {
     padding: 8px 0;
+    max-height: 5000px;
+    /* Large enough to fit content */
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease;
+    opacity: 1;
+}
+
+.budget-work-types-container.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    border: none;
 }
 
 .budget-work-type {
@@ -192,6 +202,18 @@
 /* Resource (Ресурс) */
 .budget-resources-container {
     padding: 4px 0;
+    max-height: 5000px;
+    /* Large enough to fit content */
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease;
+    opacity: 1;
+}
+
+.budget-resources-container.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    border: none;
 }
 
 .budget-resource-header {
@@ -352,6 +374,12 @@
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
+}
+
+.res-type-icon svg {
+    width: 18px;
+    height: 18px;
+    fill: white;
 }
 
 .res-type-icon:hover {
