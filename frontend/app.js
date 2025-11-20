@@ -239,9 +239,9 @@ async function renderList() {
     const list = document.getElementById('object-list');
     list.innerHTML = '';
     const objects = await fetchObjects();
-    objects.forEach(obj => {
+    objects.forEach((obj, index) => {
         const li = document.createElement('li');
-        li.textContent = obj.name;
+        li.textContent = `${index + 1}. ${obj.name}`;
         li.dataset.id = obj.id; // Store ID for restoration
         li.onclick = () => {
             selectObject(obj.id, li);
