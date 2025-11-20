@@ -2,7 +2,30 @@
 // --- Приход: таблица, модалка, логика через API ---
 let incomeRows = [];
 let editingIncomeId = null;
+let selectedId = null;
 
+// --- Helper: Format Number (1 000 000) ---
+function formatNumber(num) {
+    if (num === null || num === undefined) return '';
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+// --- Helper: Parse Number (remove spaces) ---
+function parseNumber(str) {
+    if (!str) return 0;
+    return parseFloat(str.toString().replace(/\s/g, '')) || 0;
+}
+
+// --- Input Formatting for Amount ---
+const amountInput = document.getElementById('income-amount');
+if (amountInput) {
+    amountInput.addEventListener('input', function (e) {
+        // Remove non-digits
+        let val = e.target.value.replace(/\D/g, '');
+        // Format
+        e.target.value = val.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    });
+}
 
 async function loadIncomes() {
     if (!selectedId) return;
@@ -34,7 +57,7 @@ function renderIncomeTable() {
             <td>${idx + 1}</td>
             <td>${row.date}</td>
             <td>${photoHtml}</td>
-            <td>${row.amount}</td>
+            <td>${formatNumber(row.amount)}</td>
             <td>${row.sender || row.from || ''}</td>
             <td>${row.receiver || row.to || ''}</td>
             <td>${row.comment || ''}</td>
@@ -50,7 +73,7 @@ function renderIncomeTable() {
         tbody.appendChild(tr);
         total += Number(row.amount) || 0;
     });
-    document.getElementById('income-total').textContent = total;
+    document.getElementById('income-total').textContent = formatNumber(total);
 
     // Кнопки удалить
     tbody.querySelectorAll('.income-delete').forEach(btn => {
@@ -74,7 +97,7 @@ function renderIncomeTable() {
             const idx = Number(btn.dataset.idx);
             const row = incomeRows[idx];
             document.getElementById('income-date').value = row.date;
-            document.getElementById('income-amount').value = row.amount;
+            document.getElementById('income-amount').value = formatNumber(row.amount);
             document.getElementById('income-from').value = row.sender || row.from || '';
             document.getElementById('income-to').value = row.receiver || row.to || '';
             document.getElementById('income-comment').value = row.comment;
@@ -137,14 +160,15 @@ document.getElementById('income-photo').onchange = function (e) {
 document.getElementById('income-form').onsubmit = async function (e) {
     e.preventDefault();
     const date = document.getElementById('income-date').value;
-    const amount = document.getElementById('income-amount').value;
+    const amountStr = document.getElementById('income-amount').value;
+    const amount = parseNumber(amountStr);
     const sender = document.getElementById('income-from').value;
     const receiver = document.getElementById('income-to').value;
     const comment = document.getElementById('income-comment').value;
     const photoInput = document.getElementById('income-photo');
     // Валидация обязательных полей
-    if (!date || !amount || isNaN(Number(amount))) {
-        alert('Заполните дату и сумму (число)');
+    if (!date || isNaN(amount) || amount <= 0) {
+        alert('Заполните дату и сумму (число > 0)');
         return false;
     }
     const formData = new FormData();
@@ -183,10 +207,6 @@ document.getElementById('income-form').onsubmit = async function (e) {
     return false;
 };
 
-// При старте — отрисовать пустую таблицу
-renderIncomeTable();
-let selectedId = null;
-
 async function fetchObjects() {
     const res = await fetch('/objects/');
     return res.json();
@@ -219,7 +239,14 @@ async function renderList() {
     objects.forEach(obj => {
         const li = document.createElement('li');
         li.textContent = obj.name;
-        li.onclick = () => selectObject(obj.id, li);
+        li.onclick = () => {
+            selectObject(obj.id, li);
+            // Close sidebar on mobile selection
+            if (window.innerWidth <= 700) {
+                sidebar.classList.remove('open');
+                sidebarToggle.style.display = 'block';
+            }
+        };
         if (obj.id === selectedId) li.classList.add('selected');
         list.appendChild(li);
     });
@@ -275,6 +302,27 @@ document.getElementById('delete-btn').onclick = async () => {
     clearSelection();
     renderList();
 };
+
+// Mobile Sidebar Toggle
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const sidebar = document.getElementById('sidebar');
+const sidebarClose = document.getElementById('sidebar-close');
+
+if (sidebarToggle) {
+    sidebarToggle.onclick = function () {
+        sidebar.classList.add('open');
+        sidebarToggle.style.display = 'none';
+    };
+}
+if (sidebarClose) {
+    sidebarClose.onclick = function () {
+        sidebar.classList.remove('open');
+        // Show toggle button again if on mobile
+        if (window.innerWidth <= 700) {
+            sidebarToggle.style.display = 'block';
+        }
+    };
+}
 
 // При старте скрываем вкладки и кнопки
 clearSelection();

@@ -24,7 +24,34 @@
     border: 1px solid #e0e0e0;
     padding: 8px 10px;
     text-align: left;
+    vertical-align: middle;
 }
+/* Center align № (1st), Photo (3rd), and Actions (last) */
+.income-table th:nth-child(1), .income-table td:nth-child(1),
+.income-table th:nth-child(3), .income-table td:nth-child(3),
+.income-table th:last-child, .income-table td:last-child {
+    text-align: center;
+}
+/* Center align actions content specifically */
+.income-table td:last-child {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    border: none; /* Flexbox breaks border collapse sometimes, but let's keep it simple */
+    border-bottom: 1px solid #e0e0e0; /* Restore bottom border */
+    border-left: 1px solid #e0e0e0;
+}
+/* Fix for flex cell border */
+.income-table tr td:last-child {
+    display: table-cell; /* Revert to table-cell to keep borders working */
+    text-align: center;
+}
+/* Use inline-flex for buttons to center them */
+.income-table td:last-child .icon-btn {
+    display: inline-flex;
+    margin: 0 2px;
+}
+
 .income-table th {
     background: #f3f3f3;
     font-weight: 600;
