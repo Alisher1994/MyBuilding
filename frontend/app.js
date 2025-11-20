@@ -366,7 +366,7 @@ if (sidebarClose) {
 
 // Print Button Logic
 document.addEventListener('DOMContentLoaded', () => {
-    const printBtn = document.getElementById('print-income-btn');
+    const printBtn = document.getElementById('download-income');
     if (printBtn) {
         printBtn.onclick = function () {
             // Update header
