@@ -219,6 +219,9 @@ function setActiveTab(tab) {
     document.querySelectorAll('.tab-content').forEach(div => {
         div.style.display = div.id === 'tab-' + tab ? '' : 'none';
     });
+    // Save active tab
+    localStorage.setItem('activeTab', tab);
+
     // Если выбрана вкладка "приход" — обновить данные
     if (tab === 'income') {
         loadIncomes();
@@ -239,6 +242,7 @@ async function renderList() {
     objects.forEach(obj => {
         const li = document.createElement('li');
         li.textContent = obj.name;
+        li.dataset.id = obj.id; // Store ID for restoration
         li.onclick = () => {
             selectObject(obj.id, li);
             // Close sidebar on mobile selection
@@ -250,6 +254,9 @@ async function renderList() {
         if (obj.id === selectedId) li.classList.add('selected');
         list.appendChild(li);
     });
+
+    // Restore state after list render
+    restoreState();
 }
 
 function showTabs(show) {
@@ -259,18 +266,51 @@ function showTabs(show) {
 
 function selectObject(id, li) {
     selectedId = id;
+    // Save selected object
+    localStorage.setItem('selectedId', id);
+
     document.querySelectorAll('#object-list li').forEach(el => el.classList.remove('selected'));
-    li.classList.add('selected');
+    if (li) li.classList.add('selected');
+
     showTabs(true);
-    setActiveTab('income'); // Сразу показываем вкладку "приход"
-    loadIncomes(); // Загружаем приходы для выбранного объекта
+
+    // Restore tab or default to 'income'
+    const savedTab = localStorage.getItem('activeTab') || 'income';
+    setActiveTab(savedTab);
+
+    loadIncomes().then(() => {
+        // Restore scroll position after data load
+        const scrollY = localStorage.getItem('scrollY');
+        if (scrollY) {
+            window.scrollTo(0, parseInt(scrollY));
+        }
+    });
 }
 
 function clearSelection() {
     selectedId = null;
+    localStorage.removeItem('selectedId');
     showTabs(false);
     document.querySelectorAll('#object-list li').forEach(el => el.classList.remove('selected'));
 }
+
+// --- State Restoration ---
+function restoreState() {
+    const savedId = localStorage.getItem('selectedId');
+    if (savedId) {
+        const id = parseInt(savedId);
+        // Find list item
+        const li = document.querySelector(`#object-list li[data-id="${id}"]`);
+        if (li) {
+            selectObject(id, li);
+        }
+    }
+}
+
+// Save scroll position on unload
+window.addEventListener('beforeunload', () => {
+    localStorage.setItem('scrollY', window.scrollY);
+});
 
 document.getElementById('add-object').onclick = async () => {
     const name = prompt('Введите имя объекта:');
@@ -324,6 +364,25 @@ if (sidebarClose) {
     };
 }
 
+// Print Button Logic
+const printBtn = document.getElementById('print-income-btn');
+if (printBtn) {
+    printBtn.onclick = function () {
+        // Update header
+        const title = document.getElementById('print-title');
+        const date = document.getElementById('print-date');
+        const objName = document.querySelector('#object-list li.selected')?.textContent || 'Объект';
+
+        if (title) title.textContent = `Отчет: ${objName}`;
+        if (date) {
+            const now = new Date();
+            date.textContent = `Дата формирования: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+        }
+
+        window.print();
+    };
+}
+
 // При старте скрываем вкладки и кнопки
-clearSelection();
+// clearSelection(); // Don't clear on start, let restoreState handle it
 renderList();
