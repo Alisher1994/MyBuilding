@@ -47,11 +47,20 @@
 .collapse-btn {
     cursor: pointer;
     user-select: none;
-    font-size: 16px;
+    font-size: 14px;
     color: #666;
     width: 20px;
     text-align: center;
-    transition: color 0.2s;
+    transition: transform 0.2s, color 0.2s;
+    display: inline-block;
+}
+
+.collapse-btn.collapsed {
+    transform: rotate(0deg);
+}
+
+.collapse-btn:not(.collapsed) {
+    transform: rotate(90deg);
 }
 
 .collapse-btn:hover {
@@ -85,7 +94,7 @@
     padding: 6px;
     border-radius: 4px;
     font-size: 14px;
-    color: #666;
+    color: #888;
     transition: all 0.2s;
     width: 28px;
     height: 28px;
@@ -100,13 +109,7 @@
     border-color: #bbb;
 }
 
-/* Unified Button Colors */
-.btn-add,
-.btn-delete {
-    color: #888;
-    border-color: #ccc;
-}
-
+/* Gray by default, colored on hover */
 .btn-add:hover {
     background: #e5f3ff;
     color: #0067c0;
@@ -123,7 +126,6 @@
 .budget-work-types-container {
     padding: 8px 0;
     max-height: 5000px;
-    /* Large enough to fit content */
     overflow: hidden;
     transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease;
     opacity: 1;
@@ -133,7 +135,6 @@
     max-height: 0;
     opacity: 0;
     padding: 0;
-    border: none;
 }
 
 .budget-work-type {
@@ -203,7 +204,6 @@
 .budget-resources-container {
     padding: 4px 0;
     max-height: 5000px;
-    /* Large enough to fit content */
     overflow: hidden;
     transition: max-height 0.3s ease-out, opacity 0.3s ease-out, padding 0.3s ease;
     opacity: 1;
@@ -213,7 +213,6 @@
     max-height: 0;
     opacity: 0;
     padding: 0;
-    border: none;
 }
 
 .budget-resource-header {
@@ -374,11 +373,12 @@
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
+    padding: 4px;
 }
 
 .res-type-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     fill: white;
 }
 

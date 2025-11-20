@@ -113,7 +113,7 @@ function createStageElement(stage, stageIdx, startWorkTypeNum) {
     const header = document.createElement('div');
     header.className = 'budget-stage-header';
     header.innerHTML = `
-        <span class="collapse-btn" title="Свернуть/развернуть">${stage.collapsed ? '❯' : '▼'}</span>
+        <span class="collapse-btn ${stage.collapsed ? 'collapsed' : ''}" title="Свернуть/развернуть">▶</span>
         <span class="stage-name editable" data-stage-id="${stage.id}" data-field="name">${stage.name}</span>
         <span class="stage-sum">${formatNum(stageSum)} сум</span>
         <button class="btn-icon btn-add" data-stage-id="${stage.id}" title="Добавить вид работ">+</button>
@@ -158,7 +158,7 @@ function createWorkTypeElement(workType, num, stageId) {
     header.className = 'budget-work-type-header';
     header.innerHTML = `
         <span class="wt-num">${num}.</span>
-        <span class="collapse-btn" title="Свернуть/развернуть">${workType.collapsed ? '❯' : '▼'}</span>
+        <span class="collapse-btn ${workType.collapsed ? 'collapsed' : ''}" title="Свернуть/развернуть">▶</span>
         <span class="wt-name editable" data-wt-id="${workType.id}" data-field="name">${workType.name}</span>
         <span class="wt-unit editable-select" data-wt-id="${workType.id}" data-field="unit">${workType.unit}</span>
         <span class="wt-quantity editable" data-wt-id="${workType.id}" data-field="quantity">${formatNum(workType.quantity)}</span>
