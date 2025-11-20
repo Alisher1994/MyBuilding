@@ -78,13 +78,18 @@ async def delete_stage(object_id: int, stage_id: int):
 async def reorder_stages(object_id: int, data: dict):
     """Изменить порядок этапов"""
     stage_ids = data.get("stage_ids", [])  # [id1, id2, id3, ...]
-    async with app.state.db.acquire() as conn:
-        for idx, stage_id in enumerate(stage_ids):
-            await conn.execute(
-                "UPDATE budget_stages SET order_index=$1 WHERE id=$2 AND object_id=$3",
-                idx, stage_id, object_id
-            )
-    return {"status": "reordered"}
+    try:
+        async with app.state.db.acquire() as conn:
+            for idx, stage_id in enumerate(stage_ids):
+                stage_id_int = int(stage_id)
+                await conn.execute(
+                    "UPDATE budget_stages SET order_index=$1 WHERE id=$2 AND object_id=$3",
+                    idx, stage_id_int, object_id
+                )
+        return {"status": "reordered"}
+    except Exception as e:
+        print(f"Error reordering stages: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to reorder stages: {str(e)}")
 
 
 # ===== WORK TYPES (Виды работ) =====
@@ -186,13 +191,18 @@ async def delete_work_type(work_type_id: int):
 async def reorder_work_types(stage_id: int, data: dict):
     """Изменить порядок видов работ внутри этапа"""
     work_type_ids = data.get("work_type_ids", [])
-    async with app.state.db.acquire() as conn:
-        for idx, wt_id in enumerate(work_type_ids):
-            await conn.execute(
-                "UPDATE budget_work_types SET order_index=$1 WHERE id=$2 AND stage_id=$3",
-                idx, wt_id, stage_id
-            )
-    return {"status": "reordered"}
+    try:
+        async with app.state.db.acquire() as conn:
+            for idx, wt_id in enumerate(work_type_ids):
+                wt_id_int = int(wt_id)
+                await conn.execute(
+                    "UPDATE budget_work_types SET order_index=$1 WHERE id=$2 AND stage_id=$3",
+                    idx, wt_id_int, stage_id
+                )
+        return {"status": "reordered"}
+    except Exception as e:
+        print(f"Error reordering work types: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to reorder work types: {str(e)}")
 
 
 # ===== RESOURCES (Ресурсы) =====
@@ -331,13 +341,19 @@ async def delete_resource(resource_id: int):
 async def reorder_resources(work_type_id: int, data: dict):
     """Изменить порядок ресурсов внутри вида работ"""
     resource_ids = data.get("resource_ids", [])
-    async with app.state.db.acquire() as conn:
-        for idx, res_id in enumerate(resource_ids):
-            await conn.execute(
-                "UPDATE budget_resources SET order_index=$1 WHERE id=$2 AND work_type_id=$3",
-                idx, res_id, work_type_id
-            )
-    return {"status": "reordered"}
+    try:
+        async with app.state.db.acquire() as conn:
+            for idx, res_id in enumerate(resource_ids):
+                # Конвертируем в int на случай если пришла строка
+                res_id_int = int(res_id)
+                await conn.execute(
+                    "UPDATE budget_resources SET order_index=$1 WHERE id=$2 AND work_type_id=$3",
+                    idx, res_id_int, work_type_id
+                )
+        return {"status": "reordered"}
+    except Exception as e:
+        print(f"Error reordering resources: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to reorder resources: {str(e)}")
 
 
 # ===== HELPER: Get full budget tree =====
