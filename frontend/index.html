@@ -65,13 +65,26 @@
                     </svg>
                 </button>
                 <button class="icon-btn" id="download-income" title="Скачать">
-                    <th>Фото</th>
-                    <th>Сумма (в сумах)</th>
-                    <th>Кто передал</th>
-                    <th>Кто получил</th>
-                    <th>Комментарии</th>
-                    <th style="width:70px;"></th>
-                    </tr>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 3v10m0 0l-4-4m4 4l4-4" stroke="#0057d8" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <rect x="3" y="15" width="14" height="2" rx="1" fill="#0057d8" />
+                    </svg>
+                </button>
+            </div>
+            <div class="income-table-wrap">
+                <table class="income-table">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Дата</th>
+                            <th>Фото</th>
+                            <th>Сумма (в сумах)</th>
+                            <th>Кто передал</th>
+                            <th>Кто получил</th>
+                            <th>Комментарии</th>
+                            <th style="width:70px;"></th>
+                        </tr>
                     </thead>
                     <tbody id="income-tbody">
                         <!-- Строки будут добавляться динамически -->
@@ -83,7 +96,7 @@
                             <td colspan="3"></td>
                         </tr>
                     </tfoot>
-                    </table>
+                </table>
             </div>
         </div>
 
