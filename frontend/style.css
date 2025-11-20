@@ -73,36 +73,6 @@ body {
 .object-list li {
     padding: 12px 20px;
     cursor: pointer;
-    font-size: 14px;
-    color: #555;
-    border-left: 3px solid transparent;
-    transition: background 0.2s;
-}
-
-.object-list li:hover {
-    background: #f0f4ff;
-    color: #0057d8;
-}
-
-.object-list li.selected {
-    background: #e6f0ff;
-    color: #0057d8;
-    border-left-color: #0057d8;
-    font-weight: 600;
-}
-
-/* --- Main Content --- */
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-}
-
-/* --- Tabs Navigation & Header Actions --- */
-#tabs-actions-row {
-    height: 60px;
     background: #fff;
     border-bottom: 1px solid #e0e0e0;
     display: flex;
