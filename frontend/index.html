@@ -108,9 +108,10 @@
                 <input type="hidden" id="income-edit-index">
             </div>
         </div>
+
         <div id="tab-budget" class="tab-content" style="display:none;">
             <div class="tab-actions">
-                <button class="icon-btn" id="add-budget-group" title="Добавить группу">
+                <button class="icon-btn" id="add-budget-group" title="Добавить этап">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                         <rect x="3" y="8" width="14" height="9" rx="2" stroke="#0057d8" stroke-width="2" />
                         <path d="M10 11v3M8.5 12.5h3" stroke="#0057d8" stroke-width="2" stroke-linecap="round" />
@@ -124,8 +125,9 @@
                     </svg>
                 </button>
             </div>
-            Данные по бюджету
+            <div id="budget-container"></div>
         </div>
+
         <div id="tab-expense" class="tab-content" style="display:none;">
             <div class="tab-actions">
                 <button class="icon-btn" id="add-expense" title="Добавить">
@@ -158,6 +160,7 @@
     </div>
 
     <script src="app.js"></script>
+    <script src="budget.js"></script>
 </body>
 
 </html>

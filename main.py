@@ -173,18 +173,58 @@ async def delete_income(object_id: int, income_id: int):
 
 # === API для объектов ===
 @app.on_event("startup")
-async def create_objects_table():
-    # Создаём таблицу objects, если не существует
-    query = """
-    CREATE TABLE IF NOT EXISTS objects (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL
-    );
-    """
-    # Также создаём pool для БД
+async def create_tables():
+    # Создаём pool для БД
     app.state.db = await asyncpg.create_pool(DATABASE_URL)
+    
     async with app.state.db.acquire() as connection:
-        await connection.execute(query)
+        # Таблица objects
+        await connection.execute("""
+            CREATE TABLE IF NOT EXISTS objects (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL
+            );
+        """)
+        
+        # Таблица budget_stages (этапы)
+        await connection.execute("""
+            CREATE TABLE IF NOT EXISTS budget_stages (
+                id SERIAL PRIMARY KEY,
+                object_id INTEGER NOT NULL REFERENCES objects(id) ON DELETE CASCADE,
+                name TEXT NOT NULL,
+                order_index INTEGER NOT NULL DEFAULT 0,
+                collapsed BOOLEAN DEFAULT FALSE
+            );
+        """)
+        
+        # Таблица budget_work_types (виды работ)
+        await connection.execute("""
+            CREATE TABLE IF NOT EXISTS budget_work_types (
+                id SERIAL PRIMARY KEY,
+                stage_id INTEGER NOT NULL REFERENCES budget_stages(id) ON DELETE CASCADE,
+                name TEXT NOT NULL,
+                unit TEXT DEFAULT 'шт',
+                quantity NUMERIC(15,3) DEFAULT 0,
+                order_index INTEGER NOT NULL DEFAULT 0,
+                collapsed BOOLEAN DEFAULT FALSE
+            );
+        """)
+        
+        # Таблица budget_resources (ресурсы)
+        await connection.execute("""
+            CREATE TABLE IF NOT EXISTS budget_resources (
+                id SERIAL PRIMARY KEY,
+                work_type_id INTEGER NOT NULL REFERENCES budget_work_types(id) ON DELETE CASCADE,
+                photo TEXT,
+                resource_type TEXT NOT NULL,
+                name TEXT NOT NULL,
+                unit TEXT DEFAULT 'шт',
+                quantity NUMERIC(15,3) DEFAULT 0,
+                price NUMERIC(15,2) DEFAULT 0,
+                supplier TEXT,
+                order_index INTEGER NOT NULL DEFAULT 0
+            );
+        """)
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -229,4 +269,7 @@ async def delete_object(object_id: int):
 @app.get("/")
 def root_redirect():
     return RedirectResponse(url="/frontend/index.html")
+
+# === Budget API ===
+exec(open("budget_api.py").read())
 

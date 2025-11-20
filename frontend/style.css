@@ -15,7 +15,7 @@ body {
     overflow: hidden;
 }
 
-/* --- Sidebar --- */
+/* === SIDEBAR === */
 .sidebar {
     width: 280px;
     background: #fff;
@@ -85,23 +85,17 @@ body {
     margin-bottom: 4px;
     border: 1px solid transparent;
     background: #fff;
-    /* Default background */
 }
 
-/* Hover state */
 .object-list li:hover {
     background: #f0f0f0;
     color: #000;
 }
 
-/* Selected (Active) state - Button style */
 .object-list li.selected {
     background: #e5f3ff;
-    /* Light blue background */
     border-color: #cce8ff;
-    /* Subtle border */
     color: #0067c0;
-    /* Blue text */
     font-weight: 600;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -110,13 +104,11 @@ body {
     flex-shrink: 0;
     margin-right: 10px;
     color: #888;
-    /* Default icon color */
     transition: color 0.1s;
 }
 
 .object-list li.selected svg {
     color: #0067c0;
-    /* Active icon color */
 }
 
 .object-list li span {
@@ -125,8 +117,7 @@ body {
     text-overflow: ellipsis;
 }
 
-
-/* --- Main Content --- */
+/* === MAIN CONTENT === */
 .main-content {
     flex: 1;
     display: flex;
@@ -135,7 +126,6 @@ body {
     position: relative;
 }
 
-/* --- Tabs Navigation & Header Actions --- */
 #tabs-actions-row {
     height: 60px;
     background: #fff;
@@ -157,7 +147,6 @@ body {
 .tabs-header {
     display: flex;
     gap: 8px;
-    /* Spacing between tabs */
     height: 100%;
     align-items: center;
 }
@@ -185,12 +174,6 @@ body {
     font-weight: 600;
 }
 
-.tab-btn.active::after {
-    display: none;
-    /* Remove underline style */
-}
-
-/* --- Object Actions (Rename/Delete) --- */
 #object-actions {
     display: flex;
     gap: 8px;
@@ -216,14 +199,12 @@ body {
     border-color: #bbb;
 }
 
-/* --- Tab Content Area --- */
 .tab-content {
     flex: 1;
     overflow-y: auto;
     padding: 24px 32px;
 }
 
-/* --- Income Table & Actions --- */
 .tab-actions {
     display: flex;
     justify-content: flex-end;
@@ -250,6 +231,7 @@ body {
     border-color: #0067c0;
 }
 
+/* === INCOME TABLE === */
 .income-table-wrap {
     background: #fff;
     border-radius: 8px;
@@ -282,7 +264,6 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* Center specific columns */
 .income-table th:nth-child(1),
 .income-table td:nth-child(1),
 .income-table th:nth-child(3),
@@ -292,7 +273,6 @@ body {
     text-align: center;
 }
 
-/* Ensure action buttons are centered in their cell */
 .income-table td:last-child {
     display: flex;
     justify-content: center;
@@ -313,7 +293,6 @@ body {
     border-radius: 4px;
 }
 
-/* Fix for table cell height to match flex container */
 .income-table td {
     vertical-align: middle;
 }
@@ -332,7 +311,7 @@ body {
     transform: scale(1.1);
 }
 
-/* --- Modal --- */
+/* === MODAL === */
 .modal {
     display: none;
     position: fixed;
@@ -357,45 +336,21 @@ body {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-}
-
-.modal-header h3 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #333;
-}
-
 .modal-close {
     background: none;
     border: none;
     font-size: 24px;
     color: #999;
     cursor: pointer;
+    position: absolute;
+    top: 16px;
+    right: 16px;
 }
 
 .modal-close:hover {
     color: #333;
 }
 
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 8px;
-    color: #555;
-}
-
-.form-group input,
-.form-group textarea,
 #income-form input,
 #income-form textarea {
     width: 100%;
@@ -408,8 +363,6 @@ body {
     transition: border-color 0.2s;
 }
 
-.form-group input:focus,
-.form-group textarea:focus,
 #income-form input:focus,
 #income-form textarea:focus {
     outline: none;
@@ -417,37 +370,292 @@ body {
     box-shadow: 0 0 0 3px rgba(0, 103, 192, 0.1);
 }
 
-.btn-primary {
-    width: 100%;
-    padding: 12px;
-    background: #0067c0;
-    color: #fff;
-    border: none;
+/* === BUDGET STYLES === */
+#budget-container {
+    padding: 20px 0;
+}
+
+.budget-total-row {
+    margin-top: 24px;
+    padding: 16px;
+    background: #f0f7ff;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0067c0;
+    display: flex;
+    justify-content: space-between;
+    border: 2px solid #cce8ff;
+}
+
+.budget-stage {
+    margin-bottom: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    cursor: move;
+}
+
+.budget-stage.dragging {
+    opacity: 0.5;
+}
+
+.budget-stage-header {
+    padding: 12px 16px;
+    background: #f5f8fa;
+    border-bottom: 2px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.collapse-btn {
+    cursor: pointer;
+    user-select: none;
+    font-size: 14px;
+    color: #666;
+    width: 20px;
+    text-align: center;
+}
+
+.collapse-btn:hover {
+    color: #0067c0;
+}
+
+.stage-name {
+    flex: 1;
+    cursor: text;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.stage-name:hover {
+    background: #e8f4ff;
+}
+
+.stage-sum {
+    font-weight: 700;
+    color: #0067c0;
+    margin-left: auto;
+    padding: 4px 12px;
+    background: #e5f3ff;
+    border-radius: 4px;
+}
+
+.btn-add {
+    color: #0067c0;
+    font-weight: 700;
+}
+
+.btn-add:hover {
+    background: #e5f3ff;
+}
+
+.btn-delete {
+    color: #d80027;
+}
+
+.btn-delete:hover {
+    background: #ffe5e5;
+}
+
+.budget-work-types-container {
+    padding: 8px 0;
+}
+
+.budget-work-type {
+    margin: 4px 16px;
+    border: 1px solid #e8e8e8;
     border-radius: 6px;
+    background: #fafafa;
+    cursor: move;
+}
+
+.budget-work-type.dragging {
+    opacity: 0.5;
+}
+
+.budget-work-type-header {
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 40px 20px 1fr 80px 100px 100px 120px 60px 30px;
+    gap: 8px;
+    align-items: center;
     font-size: 14px;
     font-weight: 600;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.wt-num {
+    color: #888;
+    font-weight: 700;
+}
+
+.wt-name {
+    cursor: text;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.wt-name:hover {
+    background: #fff;
+}
+
+.wt-unit,
+.wt-quantity,
+.wt-price,
+.wt-sum {
+    text-align: right;
+    padding: 4px 8px;
+}
+
+.wt-unit,
+.wt-quantity {
     cursor: pointer;
+}
+
+.wt-unit:hover,
+.wt-quantity:hover {
+    background: #fff;
+    border-radius: 4px;
+}
+
+.wt-price,
+.wt-sum {
+    font-weight: 600;
+    color: #0067c0;
+}
+
+.budget-resources-container {
+    padding: 4px 0;
+}
+
+.budget-resource {
+    margin: 2px 24px 2px 48px;
+    padding: 8px 12px;
+    display: grid;
+    grid-template-columns: 30px 50px 120px 1fr 80px 100px 100px 120px 150px 30px;
+    gap: 8px;
+    align-items: center;
+    font-size: 13px;
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 4px;
+    cursor: move;
+}
+
+.budget-resource.dragging {
+    opacity: 0.5;
+}
+
+.budget-resource:hover {
+    background: #f9f9f9;
+    border-color: #e0e0e0;
+}
+
+.res-num {
+    color: #aaa;
+    font-size: 12px;
+    text-align: center;
+}
+
+.res-photo {
+    text-align: center;
+}
+
+.res-photo-thumb {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+    cursor: pointer;
+}
+
+.res-photo-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-upload-photo {
+    background: #f0f0f0;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
+}
+
+.btn-upload-photo:hover {
+    background: #e5f3ff;
+    border-color: #0067c0;
+}
+
+.res-type,
+.res-name,
+.res-unit,
+.res-quantity,
+.res-price,
+.res-supplier {
+    cursor: text;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.res-type:hover,
+.res-name:hover,
+.res-unit:hover,
+.res-quantity:hover,
+.res-price:hover,
+.res-supplier:hover {
+    background: #f0f7ff;
+}
+
+.res-quantity,
+.res-price,
+.res-sum {
+    text-align: right;
+}
+
+.res-sum {
+    font-weight: 600;
+    color: #0067c0;
+}
+
+.inline-edit-input,
+.inline-edit-select {
+    width: 100%;
+    padding: 4px 8px;
+    border: 2px solid #0067c0;
+    border-radius: 4px;
+    font-size: inherit;
+    font-family: inherit;
+    background: #fff;
+    outline: none;
+}
+
+.inline-edit-input:focus,
+.inline-edit-select:focus {
+    box-shadow: 0 0 0 3px rgba(0, 103, 192, 0.1);
+}
+
+.editable,
+.editable-select {
     transition: background 0.2s;
 }
 
-.btn-primary:hover {
-    background: #005a9e;
-}
-
-/* Photo View Modal */
-#photo-modal-img {
-    max-width: 100%;
-    max-height: 85vh;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* --- Sidebar Toggle (Mobile) --- */
+/* === MOBILE === */
 .sidebar-toggle {
     display: none;
 }
 
-/* --- Кнопка скрыть боковое меню --- */
 .sidebar-close {
     display: none;
     position: fixed;
@@ -482,7 +690,6 @@ body {
         transform: translateX(0);
     }
 
-
     .main-content {
         margin-left: 0;
         padding: 24px 8px;
@@ -509,120 +716,26 @@ body {
     .sidebar-close {
         display: block;
     }
+
+    .budget-work-type-header,
+    .budget-resource {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .budget-resource {
+        margin: 2px 16px;
+    }
 }
 
-/* Print Styles */
-@media print {
-    @page {
-        size: portrait;
-        margin: 1cm;
+@media (max-width: 1200px) {
+    .budget-work-type-header {
+        grid-template-columns: 40px 20px 1fr 60px 80px 80px 100px 50px 30px;
+        font-size: 13px;
     }
 
-    body {
-        background: #fff;
-        font-family: 'Inter', sans-serif;
-        color: #000;
-        height: auto;
-        overflow: visible;
-    }
-
-    /* Hide everything by default */
-    #sidebar,
-    .sidebar-toggle,
-    .tabs-nav,
-    #add-income,
-    #download-income,
-    .income-edit,
-    .income-delete,
-    .modal,
-    #tabs-actions-row,
-    .sidebar-close {
-        display: none !important;
-    }
-
-    /* Show only main content */
-    .main-content {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: auto;
-        overflow: visible;
-        display: block;
-    }
-
-    .tab-content {
-        display: block !important;
-        /* Force show content */
-        padding: 0;
-        overflow: visible;
-    }
-
-    /* Hide other tabs content if any (though usually hidden by JS) */
-    #tab-analysis,
-    #tab-budget,
-    #tab-expense {
-        display: none !important;
-    }
-
-    #tab-income {
-        display: block !important;
-    }
-
-    /* Header */
-    #print-header {
-        display: block !important;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    #print-title {
-        font-size: 24px;
-        font-weight: bold;
-        margin: 0 0 5px 0;
-    }
-
-    #print-date {
-        font-size: 14px;
-        color: #555;
-        margin: 0;
-    }
-
-    /* Table styling for print */
-    .income-table-wrap {
-        overflow: visible;
-        box-shadow: none;
-    }
-
-    .income-table {
-        width: 100%;
-        border: 1px solid #000;
-        box-shadow: none;
-        min-width: auto;
-        /* Reset min-width */
-    }
-
-    .income-table th,
-    .income-table td {
-        border: 1px solid #000;
-        padding: 6px;
+    .budget-resource {
+        grid-template-columns: 30px 50px 100px 1fr 60px 80px 80px 100px 120px 30px;
         font-size: 12px;
-        color: #000;
-    }
-
-    .income-table th {
-        background: #eee !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-
-    /* Hide Actions column */
-    .income-table th:last-child,
-    .income-table td:last-child {
-        display: none;
-    }
-
-    /* Photos */
-    .income-photo-thumb {
-        border: none;
     }
 }

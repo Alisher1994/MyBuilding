@@ -226,6 +226,11 @@ function setActiveTab(tab) {
     if (tab === 'income') {
         loadIncomes();
     }
+
+    // Если выбрана вкладка "бюджет" — обновить данные
+    if (tab === 'budget' && selectedId && window.loadBudget) {
+        window.loadBudget(selectedId);
+    }
 }
 
 // Вкладки переключение (инициализация сразу после определения)
