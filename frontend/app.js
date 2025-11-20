@@ -25,10 +25,15 @@ function renderIncomeTable() {
     let total = 0;
     incomeRows.forEach((row, idx) => {
         const tr = document.createElement('tr');
+        // Safe fallback for image
+        const photoHtml = row.photo
+            ? `<img src="${row.photo}?t=${Date.now()}" class="income-photo-thumb income-photo-view" data-idx="${idx}" alt="Фото">`
+            : '<span style="color:#ccc;font-size:0.8em;">Нет фото</span>';
+
         tr.innerHTML = `
             <td>${idx + 1}</td>
             <td>${row.date}</td>
-            <td>${row.photo ? `<img src="${row.photo}?t=${Date.now()}" class="income-photo-thumb income-photo-view" data-idx="${idx}" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 24 24%22><rect width=%2224%22 height=%2224%22 fill=%22%23f0f0f0%22/><path d=%22M6 6h12v12H6z%22 fill=%22%23ddd%22/><text x=%2212%22 y=%2216%22 font-size=%226%22 text-anchor=%22middle%22 fill=%22%23999%22>no image</text></svg>';` : ''}</td>
+            <td>${photoHtml}</td>
             <td>${row.amount}</td>
             <td>${row.sender || row.from || ''}</td>
             <td>${row.receiver || row.to || ''}</td>
@@ -49,7 +54,7 @@ function renderIncomeTable() {
 
     // Кнопки удалить
     tbody.querySelectorAll('.income-delete').forEach(btn => {
-        btn.onclick = async function() {
+        btn.onclick = async function () {
             const idx = Number(btn.dataset.idx);
             const row = incomeRows[idx];
             if (confirm('Удалить эту строку?')) {
@@ -65,7 +70,7 @@ function renderIncomeTable() {
     });
     // Кнопки редактировать
     tbody.querySelectorAll('.income-edit').forEach(btn => {
-        btn.onclick = function() {
+        btn.onclick = function () {
             const idx = Number(btn.dataset.idx);
             const row = incomeRows[idx];
             document.getElementById('income-date').value = row.date;
@@ -81,7 +86,7 @@ function renderIncomeTable() {
     });
     // Просмотр фото
     tbody.querySelectorAll('.income-photo-view').forEach(img => {
-        img.onclick = function() {
+        img.onclick = function () {
             const idx = Number(img.dataset.idx);
             const row = incomeRows[idx];
             if (row.photo) {
@@ -94,29 +99,29 @@ function renderIncomeTable() {
     });
 }
 
-document.getElementById('add-income').onclick = function() {
+document.getElementById('add-income').onclick = function () {
     document.getElementById('income-modal').style.display = 'flex';
     document.getElementById('income-form').reset();
     document.getElementById('income-photo').value = '';
     document.getElementById('income-modal').dataset.photo = '';
     document.getElementById('income-edit-index').value = '';
-    document.getElementById('income-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('income-date').value = new Date().toISOString().slice(0, 10);
     editingIncomeId = null;
 };
 
 // Закрытие модалок (универсальное)
 document.querySelectorAll('.modal-close').forEach(btn => {
-    btn.onclick = function() {
+    btn.onclick = function () {
         btn.closest('.modal').style.display = 'none';
         // Очистка src для фото-модалки
         if (btn.id === 'photo-modal-close') {
-             document.getElementById('photo-modal-img').src = '';
+            document.getElementById('photo-modal-img').src = '';
         }
     };
 });
 
 // Закрытие по клику на фон
-window.onclick = function(event) {
+window.onclick = function (event) {
     if (event.target.classList.contains('modal')) {
         event.target.style.display = "none";
         if (event.target.id === 'photo-modal') {
@@ -125,11 +130,11 @@ window.onclick = function(event) {
     }
 };
 
-document.getElementById('income-photo').onchange = function(e) {
+document.getElementById('income-photo').onchange = function (e) {
     // Предпросмотр не нужен, фото отправляется на сервер
 };
 
-document.getElementById('income-form').onsubmit = async function(e) {
+document.getElementById('income-form').onsubmit = async function (e) {
     e.preventDefault();
     const date = document.getElementById('income-date').value;
     const amount = document.getElementById('income-amount').value;
@@ -245,8 +250,8 @@ document.getElementById('add-object').onclick = async () => {
     if (!name) return;
     await fetch('/objects/', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({name})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
     });
     renderList();
 };
@@ -257,8 +262,8 @@ document.getElementById('rename-btn').onclick = async () => {
     if (!name) return;
     await fetch(`/objects/${selectedId}`, {
         method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({name})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
     });
     renderList();
 };
