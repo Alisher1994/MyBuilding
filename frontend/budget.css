@@ -177,40 +177,6 @@
     cursor: pointer;
 }
 
-.wt-unit:hover,
-.wt-quantity:hover {
-    background: #fff;
-    border-radius: 4px;
-}
-
-.wt-price,
-.wt-sum {
-    font-weight: 600;
-    color: #0067c0;
-}
-
-/* Resource (Ресурс) */
-.budget-resources-container {
-    padding: 4px 0;
-}
-
-.budget-resource {
-    margin: 2px 24px 2px 48px;
-    padding: 8px 12px;
-    display: grid;
-    grid-template-columns: 40px 60px 50px 1fr 80px 100px 100px 120px 150px 30px;
-    gap: 8px;
-    align-items: center;
-    font-size: 13px;
-    background: #fff;
-    border: 1px solid #f0f0f0;
-    border-radius: 4px;
-    cursor: move;
-}
-
-.budget-resource.dragging {
-    opacity: 0.5;
-}
 
 .budget-resource:hover {
     background: #f9f9f9;

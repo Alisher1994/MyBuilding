@@ -145,6 +145,25 @@ function createWorkTypeElement(workType, num, stageId) {
     resourcesContainer.className = 'budget-resources-container';
     resourcesContainer.style.display = workType.collapsed ? 'none' : 'block';
 
+    // Добавляем заголовок таблицы ресурсов
+    if (workType.resources.length > 0) {
+        const headerRow = document.createElement('div');
+        headerRow.className = 'budget-resource-header';
+        headerRow.innerHTML = `
+            <span>№</span>
+            <span>Фото</span>
+            <span>Тип</span>
+            <span>Название</span>
+            <span>Ед.изм</span>
+            <span>Кол-во</span>
+            <span>Цена</span>
+            <span>Сумма</span>
+            <span>Поставщик</span>
+            <span></span>
+        `;
+        resourcesContainer.appendChild(headerRow);
+    }
+
     workType.resources.forEach((res, resIdx) => {
         const resEl = createResourceElement(res, num, resIdx + 1, workType.id);
         resourcesContainer.appendChild(resEl);
@@ -423,9 +442,15 @@ function makeEditable(element, onSave) {
 function makeEditableSelect(element, options, onSave) {
     element.onclick = function (e) {
         e.stopPropagation();
-        const currentValue = element.textContent;
+        e.preventDefault();
+        
+        // Проверяем что уже не редактируем
+        if (element.querySelector('select')) return;
+        
+        const currentValue = element.textContent.trim();
         const select = document.createElement('select');
         select.className = 'inline-edit-select';
+        select.size = Math.min(options.length, 10); // Показываем как список
 
         options.forEach(opt => {
             const option = document.createElement('option');
@@ -435,26 +460,21 @@ function makeEditableSelect(element, options, onSave) {
             select.appendChild(option);
         });
 
-        select.onblur = async function () {
-            const newValue = select.value;
-            if (newValue !== currentValue) {
-                await onSave(newValue);
-            }
-            element.textContent = newValue;
-        };
-
         select.onchange = async function () {
             const newValue = select.value;
-            if (newValue !== currentValue) {
+            if (newValue && newValue !== currentValue) {
                 await onSave(newValue);
             }
-            element.textContent = newValue;
+            element.textContent = newValue || currentValue;
+        };
+        
+        select.onblur = function () {
+            element.textContent = select.value || currentValue;
         };
 
         element.textContent = '';
         element.appendChild(select);
         select.focus();
-        select.click();
     };
 }
 
@@ -462,9 +482,15 @@ function makeEditableSelect(element, options, onSave) {
 function makeEditableSelectWithIcons(element, options, onSave) {
     element.onclick = function (e) {
         e.stopPropagation();
-        const currentValue = element.querySelector('.res-type-icon')?.title || element.textContent;
+        e.preventDefault();
+        
+        // Проверяем что уже не редактируем
+        if (element.querySelector('select')) return;
+        
+        const currentValue = element.querySelector('.res-type-icon')?.title || element.textContent.trim();
         const select = document.createElement('select');
         select.className = 'inline-edit-select';
+        select.size = Math.min(options.length, 10); // Показываем как список
 
         options.forEach(opt => {
             const option = document.createElement('option');
@@ -477,23 +503,23 @@ function makeEditableSelectWithIcons(element, options, onSave) {
 
         select.onchange = async function () {
             const newValue = select.value;
-            if (newValue !== currentValue) {
+            if (newValue && newValue !== currentValue) {
                 await onSave(newValue);
             }
+            const resType = RESOURCE_TYPES[newValue || currentValue];
+            element.innerHTML = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${newValue || currentValue}">${resType.letter}</div>`;
+        };
+
+        select.onblur = function () {
+            const newValue = select.value || currentValue;
             const resType = RESOURCE_TYPES[newValue];
             element.innerHTML = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${newValue}">${resType.letter}</div>`;
         };
 
-        select.onblur = async function () {
-            const newValue = select.value;
-            const resType = RESOURCE_TYPES[newValue];
-            element.innerHTML = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${newValue}">${resType.letter}</div>`;
-        };
-
+        const iconHtml = element.innerHTML;
         element.textContent = '';
         element.appendChild(select);
         select.focus();
-        select.click();
     };
 }
 
