@@ -443,14 +443,13 @@ function makeEditableSelect(element, options, onSave) {
     element.onclick = function (e) {
         e.stopPropagation();
         e.preventDefault();
-        
+
         // Проверяем что уже не редактируем
         if (element.querySelector('select')) return;
-        
+
         const currentValue = element.textContent.trim();
         const select = document.createElement('select');
         select.className = 'inline-edit-select';
-        select.size = Math.min(options.length, 10); // Показываем как список
 
         options.forEach(opt => {
             const option = document.createElement('option');
@@ -467,7 +466,7 @@ function makeEditableSelect(element, options, onSave) {
             }
             element.textContent = newValue || currentValue;
         };
-        
+
         select.onblur = function () {
             element.textContent = select.value || currentValue;
         };
@@ -483,14 +482,13 @@ function makeEditableSelectWithIcons(element, options, onSave) {
     element.onclick = function (e) {
         e.stopPropagation();
         e.preventDefault();
-        
+
         // Проверяем что уже не редактируем
         if (element.querySelector('select')) return;
-        
+
         const currentValue = element.querySelector('.res-type-icon')?.title || element.textContent.trim();
         const select = document.createElement('select');
         select.className = 'inline-edit-select';
-        select.size = Math.min(options.length, 10); // Показываем как список
 
         options.forEach(opt => {
             const option = document.createElement('option');

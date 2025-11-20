@@ -271,5 +271,5 @@ def root_redirect():
     return RedirectResponse(url="/frontend/index.html")
 
 # === Budget API ===
-exec(open("budget_api.py").read())
+exec(open("budget_api.py", encoding="utf-8").read())
 
