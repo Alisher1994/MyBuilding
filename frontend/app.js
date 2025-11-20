@@ -3,11 +3,20 @@
 let incomeRows = [];
 let editingIncomeId = null;
 
+
 async function loadIncomes() {
     if (!selectedId) return;
-    const res = await fetch(`/objects/${selectedId}/incomes/`);
-    incomeRows = await res.json();
-    renderIncomeTable();
+    try {
+        const res = await fetch(`/objects/${selectedId}/incomes/`);
+        if (!res.ok) {
+            throw new Error(`Server error: ${res.status}`);
+        }
+        incomeRows = await res.json();
+        renderIncomeTable();
+    } catch (err) {
+        console.error("Failed to load incomes:", err);
+        alert("Не удалось загрузить данные: " + err.message);
+    }
 }
 
 function renderIncomeTable() {
@@ -44,8 +53,13 @@ function renderIncomeTable() {
             const idx = Number(btn.dataset.idx);
             const row = incomeRows[idx];
             if (confirm('Удалить эту строку?')) {
-                await fetch(`/objects/${selectedId}/incomes/${row.id}`, { method: 'DELETE' });
-                await loadIncomes();
+                try {
+                    const res = await fetch(`/objects/${selectedId}/incomes/${row.id}`, { method: 'DELETE' });
+                    if (!res.ok) throw new Error('Delete failed');
+                    await loadIncomes();
+                } catch (e) {
+                    alert("Ошибка удаления: " + e.message);
+                }
             }
         };
     });
@@ -71,8 +85,10 @@ function renderIncomeTable() {
             const idx = Number(img.dataset.idx);
             const row = incomeRows[idx];
             if (row.photo) {
-                document.getElementById('photo-modal-img').src = row.photo;
-                document.getElementById('photo-modal').style.display = 'flex';
+                const modal = document.getElementById('photo-modal');
+                const modalImg = document.getElementById('photo-modal-img');
+                modalImg.src = row.photo;
+                modal.style.display = 'flex';
             }
         };
     });
@@ -88,34 +104,30 @@ document.getElementById('add-income').onclick = function() {
     editingIncomeId = null;
 };
 
-document.getElementById('income-modal-close').onclick = function() {
-    document.getElementById('income-modal').style.display = 'none';
+// Закрытие модалок (универсальное)
+document.querySelectorAll('.modal-close').forEach(btn => {
+    btn.onclick = function() {
+        btn.closest('.modal').style.display = 'none';
+        // Очистка src для фото-модалки
+        if (btn.id === 'photo-modal-close') {
+             document.getElementById('photo-modal-img').src = '';
+        }
+    };
+});
+
+// Закрытие по клику на фон
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = "none";
+        if (event.target.id === 'photo-modal') {
+            document.getElementById('photo-modal-img').src = '';
+        }
+    }
 };
 
 document.getElementById('income-photo').onchange = function(e) {
     // Предпросмотр не нужен, фото отправляется на сервер
 };
-
-// Закрытие модалки просмотра фото
-const photoModalClose = document.getElementById('photo-modal-close');
-if (photoModalClose) {
-    photoModalClose.onclick = function() {
-        const m = document.getElementById('photo-modal');
-        const img = document.getElementById('photo-modal-img');
-        if (m) m.style.display = 'none';
-        if (img) img.src = '';
-    };
-}
-const photoModal = document.getElementById('photo-modal');
-if (photoModal) {
-    photoModal.onclick = function(e) {
-        if (e.target && e.target.id === 'photo-modal') {
-            const img = document.getElementById('photo-modal-img');
-            photoModal.style.display = 'none';
-            if (img) img.src = '';
-        }
-    };
-}
 
 document.getElementById('income-form').onsubmit = async function(e) {
     e.preventDefault();

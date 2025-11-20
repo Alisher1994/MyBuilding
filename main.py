@@ -27,22 +27,27 @@ class IncomeIn(BaseModel):
     receiver: str
     comment: str = ""
 
+
 @app.get("/objects/{object_id}/incomes/")
 async def get_incomes(object_id: int):
-    query = "SELECT id, date, photo, amount, sender, receiver, comment FROM incomes WHERE object_id=$1 ORDER BY id;"
-    async with app.state.db.acquire() as connection:
-        rows = await connection.fetch(query, object_id)
-    return [
-        {
-            "id": row["id"],
-            "date": row["date"].isoformat() if row["date"] else None,
-            "photo": row["photo"],
-            "amount": float(row["amount"]),
-            "sender": row["sender"],
-            "receiver": row["receiver"],
-            "comment": row["comment"]
-        } for row in rows
-    ]
+    try:
+        query = "SELECT id, date, photo, amount, sender, receiver, comment FROM incomes WHERE object_id=$1 ORDER BY id;"
+        async with app.state.db.acquire() as connection:
+            rows = await connection.fetch(query, object_id)
+        return [
+            {
+                "id": row["id"],
+                "date": row["date"].isoformat() if row["date"] else None,
+                "photo": row["photo"],
+                "amount": float(row["amount"]),
+                "sender": row["sender"],
+                "receiver": row["receiver"],
+                "comment": row["comment"]
+            } for row in rows
+        ]
+    except Exception as e:
+        print(f"Error in get_incomes: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get('/health')
@@ -72,6 +77,7 @@ async def uploads_list():
 @app.post("/objects/{object_id}/incomes/")
 async def add_income(object_id: int, date: str = Form(...), amount: float = Form(...), sender: str = Form(...), receiver: str = Form(...), comment: str = Form(""), photo: UploadFile = File(None)):
     try:
+        print(f"Adding income for object {object_id}. Date: {date}, Amount: {amount}, Photo: {photo.filename if photo else 'None'}")
         from datetime import date as dtdateclass
         photo_path = None
         if photo:
@@ -109,46 +115,52 @@ async def add_income(object_id: int, date: str = Form(...), amount: float = Form
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
+        print(f"Error in add_income: {e}\n{tb}")
         raise HTTPException(status_code=500, detail=f"{e}\n{tb}")
 
 @app.put("/objects/{object_id}/incomes/{income_id}")
 async def update_income(object_id: int, income_id: int, date: str = Form(...), amount: float = Form(...), sender: str = Form(...), receiver: str = Form(...), comment: str = Form(""), photo: UploadFile = File(None)):
-    # Получаем старую запись для удаления старого фото, если нужно
-    old_photo = None
-    async with app.state.db.acquire() as connection:
-        old = await connection.fetchrow("SELECT photo FROM incomes WHERE id=$1 AND object_id=$2", income_id, object_id)
-        if old:
-            old_photo = old["photo"]
-    photo_path = old_photo
-    if photo:
-        # sanitize filename for update flow
-        orig = os.path.basename(photo.filename)
-        safe = re.sub(r'[^A-Za-z0-9_.-]', '_', orig)
-        fname = f"income_{object_id}_{int(dtdate.today().strftime('%Y%m%d'))}_{safe}"
-        dest = os.path.join(UPLOAD_DIR, fname)
-        with open(dest, "wb") as f:
-            shutil.copyfileobj(photo.file, f)
-        photo_path = f"/uploads/{fname}"
-        print(f"Saved upload (update): {dest} -> {photo_path}")
-        # optionally: remove old file
-    query = """
-        UPDATE incomes SET date=$1, photo=$2, amount=$3, sender=$4, receiver=$5, comment=$6
-        WHERE id=$7 AND object_id=$8
-        RETURNING id, date, photo, amount, sender, receiver, comment;
-    """
-    async with app.state.db.acquire() as connection:
-        row = await connection.fetchrow(query, date, photo_path, amount, sender, receiver, comment, income_id, object_id)
-    if not row:
-        raise HTTPException(status_code=404, detail="Строка не найдена")
-    return {
-        "id": row["id"],
-        "date": row["date"].isoformat() if row["date"] else None,
-        "photo": row["photo"],
-        "amount": float(row["amount"]),
-        "sender": row["sender"],
-        "receiver": row["receiver"],
-        "comment": row["comment"]
-    }
+    try:
+        print(f"Updating income {income_id} for object {object_id}. Photo: {photo.filename if photo else 'None'}")
+        # Получаем старую запись для удаления старого фото, если нужно
+        old_photo = None
+        async with app.state.db.acquire() as connection:
+            old = await connection.fetchrow("SELECT photo FROM incomes WHERE id=$1 AND object_id=$2", income_id, object_id)
+            if old:
+                old_photo = old["photo"]
+        photo_path = old_photo
+        if photo:
+            # sanitize filename for update flow
+            orig = os.path.basename(photo.filename)
+            safe = re.sub(r'[^A-Za-z0-9_.-]', '_', orig)
+            fname = f"income_{object_id}_{int(dtdate.today().strftime('%Y%m%d'))}_{safe}"
+            dest = os.path.join(UPLOAD_DIR, fname)
+            with open(dest, "wb") as f:
+                shutil.copyfileobj(photo.file, f)
+            photo_path = f"/uploads/{fname}"
+            print(f"Saved upload (update): {dest} -> {photo_path}")
+            # optionally: remove old file
+        query = """
+            UPDATE incomes SET date=$1, photo=$2, amount=$3, sender=$4, receiver=$5, comment=$6
+            WHERE id=$7 AND object_id=$8
+            RETURNING id, date, photo, amount, sender, receiver, comment;
+        """
+        async with app.state.db.acquire() as connection:
+            row = await connection.fetchrow(query, date, photo_path, amount, sender, receiver, comment, income_id, object_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="Строка не найдена")
+        return {
+            "id": row["id"],
+            "date": row["date"].isoformat() if row["date"] else None,
+            "photo": row["photo"],
+            "amount": float(row["amount"]),
+            "sender": row["sender"],
+            "receiver": row["receiver"],
+            "comment": row["comment"]
+        }
+    except Exception as e:
+        print(f"Error in update_income: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/objects/{object_id}/incomes/{income_id}")
 async def delete_income(object_id: int, income_id: int):
