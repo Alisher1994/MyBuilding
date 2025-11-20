@@ -262,9 +262,33 @@ async function renderList() {
 }
 
 function showTabs(show) {
-    document.getElementById('tabs-actions-row').style.display = show ? 'flex' : 'none';
+    const row = document.getElementById('tabs-actions-row');
+    const tabs = document.getElementById('tabs');
+    const actions = document.getElementById('object-actions');
+    const isMobile = window.innerWidth <= 700;
+
+    if (show) {
+        row.style.display = 'flex';
+        tabs.style.display = 'flex';
+        actions.style.display = 'flex';
+    } else {
+        tabs.style.display = 'none';
+        actions.style.display = 'none';
+        // On mobile, keep the row visible so the sidebar toggle button is accessible
+        if (isMobile) {
+            row.style.display = 'flex';
+        } else {
+            row.style.display = 'none';
+        }
+    }
     document.querySelectorAll('.tab-content').forEach(div => div.style.display = 'none');
 }
+
+window.addEventListener('resize', () => {
+    if (!selectedId) {
+        showTabs(false);
+    }
+});
 
 function selectObject(id, li) {
     selectedId = id;
