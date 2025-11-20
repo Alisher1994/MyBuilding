@@ -3,18 +3,20 @@
 let budgetData = []; // Полное дерево: stages -> work_types -> resources
 let selectedObjectId = null;
 
-// Типы ресурсов
-const RESOURCE_TYPES = [
-    'Трудоресурсы',
-    'Материал',
-    'Доставка',
-    'Оборудование',
-    'Мебель',
-    'Инструменты',
-    'Коммуналка',
-    'Документация',
-    'Расходные материалы'
-];
+// Типы ресурсов с цветами и иконками
+const RESOURCE_TYPES = {
+    'Трудоресурсы': { color: '#9C27B0', letter: 'Т' },
+    'Материал': { color: '#8BC34A', letter: 'М' },
+    'Доставка': { color: '#2196F3', letter: 'Д' },
+    'Оборудование': { color: '#673AB7', letter: 'О' },
+    'Мебель': { color: '#00BCD4', letter: 'М' },
+    'Инструменты': { color: '#4CAF50', letter: 'И' },
+    'Коммуналка': { color: '#E91E63', letter: 'К' },
+    'Документация': { color: '#FF9800', letter: 'Д' },
+    'Расходные материалы': { color: '#FFEB3B', letter: 'Р' }
+};
+
+const RESOURCE_TYPE_NAMES = Object.keys(RESOURCE_TYPES);
 
 // Единицы измерения
 const UNITS = ['шт', 'м', 'м2', 'м3', 'кг', 'л', 'пачка', 'комплект', 'мешок', 'ведро'];
@@ -84,7 +86,7 @@ function createStageElement(stage, stageIdx, startWorkTypeNum) {
     const header = document.createElement('div');
     header.className = 'budget-stage-header';
     header.innerHTML = `
-        <span class="collapse-btn" data-stage-id="${stage.id}">${stage.collapsed ? '▶' : '▼'}</span>
+        <span class="collapse-btn" data-stage-id="${stage.id}">${stage.collapsed ? '❯' : '❮'}</span>
         <span class="stage-name editable" data-stage-id="${stage.id}" data-field="name">${stage.name}</span>
         <span class="stage-sum">${formatNum(stageSum)} сум</span>
         <button class="btn-icon btn-add" data-stage-id="${stage.id}" title="Добавить вид работ">+</button>
@@ -127,7 +129,7 @@ function createWorkTypeElement(workType, num, stageId) {
     header.className = 'budget-work-type-header';
     header.innerHTML = `
         <span class="wt-num">${num}.</span>
-        <span class="collapse-btn" data-wt-id="${workType.id}">${workType.collapsed ? '▶' : '▼'}</span>
+        <span class="collapse-btn" data-wt-id="${workType.id}">${workType.collapsed ? '❯' : '❮'}</span>
         <span class="wt-name editable" data-wt-id="${workType.id}" data-field="name">${workType.name}</span>
         <span class="wt-unit editable-select" data-wt-id="${workType.id}" data-field="unit">${workType.unit}</span>
         <span class="wt-quantity editable" data-wt-id="${workType.id}" data-field="quantity">${formatNum(workType.quantity)}</span>
@@ -144,7 +146,7 @@ function createWorkTypeElement(workType, num, stageId) {
     resourcesContainer.style.display = workType.collapsed ? 'none' : 'block';
 
     workType.resources.forEach((res, resIdx) => {
-        const resEl = createResourceElement(res, resIdx + 1, workType.id);
+        const resEl = createResourceElement(res, num, resIdx + 1, workType.id);
         resourcesContainer.appendChild(resEl);
     });
 
@@ -157,7 +159,7 @@ function createWorkTypeElement(workType, num, stageId) {
 }
 
 // Создание элемента ресурса
-function createResourceElement(resource, num, workTypeId) {
+function createResourceElement(resource, workTypeNum, resNum, workTypeId) {
     const div = document.createElement('div');
     div.className = 'budget-resource';
     div.dataset.resourceId = resource.id;
@@ -165,16 +167,24 @@ function createResourceElement(resource, num, workTypeId) {
     div.draggable = true;
 
     const resSum = resource.quantity * resource.price;
+    const resType = RESOURCE_TYPES[resource.resource_type] || RESOURCE_TYPES['Материал'];
+    const resIcon = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${resource.resource_type}">${resType.letter}</div>`;
 
     div.innerHTML = `
-        <span class="res-num">${num}</span>
+        <span class="res-num">${workTypeNum}.${resNum}</span>
         <span class="res-photo">
             ${resource.photo ?
-            `<img src="${resource.photo}" alt="Фото" class="res-photo-thumb">` :
+            `<div class="res-photo-container">
+                <img src="${resource.photo}" alt="Фото" class="res-photo-thumb" data-res-id="${resource.id}">
+                <div class="res-photo-actions">
+                    <button class="res-photo-view" data-photo="${resource.photo}" title="Просмотр">👁</button>
+                    <button class="res-photo-delete" data-res-id="${resource.id}" title="Удалить фото">🗑</button>
+                </div>
+            </div>` :
             `<button class="btn-upload-photo" data-res-id="${resource.id}">📷</button>`
         }
         </span>
-        <span class="res-type editable-select" data-res-id="${resource.id}" data-field="resource_type">${resource.resource_type}</span>
+        <span class="res-type editable-select" data-res-id="${resource.id}" data-field="resource_type">${resIcon}</span>
         <span class="res-name editable" data-res-id="${resource.id}" data-field="name">${resource.name}</span>
         <span class="res-unit editable-select" data-res-id="${resource.id}" data-field="unit">${resource.unit}</span>
         <span class="res-quantity editable" data-res-id="${resource.id}" data-field="quantity">${formatNum(resource.quantity)}</span>
@@ -309,9 +319,10 @@ function setupResourceEvents(div, resource) {
 
     // Dropdown для типа ресурса
     const typeEl = div.querySelector('.res-type');
-    makeEditableSelect(typeEl, RESOURCE_TYPES, async (newValue) => {
+    makeEditableSelectWithIcons(typeEl, RESOURCE_TYPE_NAMES, async (newValue) => {
         await updateResource(resource.id, { resource_type: newValue });
         resource.resource_type = newValue;
+        renderBudget();
     });
 
     // Dropdown для единицы измерения
@@ -336,6 +347,30 @@ function setupResourceEvents(div, resource) {
                 }
             };
             input.click();
+        };
+    }
+
+    // Просмотр фото
+    const photoView = div.querySelector('.res-photo-view');
+    if (photoView) {
+        photoView.onclick = (e) => {
+            e.stopPropagation();
+            const modal = document.getElementById('photo-modal');
+            const modalImg = document.getElementById('photo-modal-img');
+            modalImg.src = photoView.dataset.photo;
+            modal.style.display = 'flex';
+        };
+    }
+
+    // Удаление фото
+    const photoDelete = div.querySelector('.res-photo-delete');
+    if (photoDelete) {
+        photoDelete.onclick = async (e) => {
+            e.stopPropagation();
+            if (confirm('Удалить фото?')) {
+                await updateResource(resource.id, { photo: '' });
+                await loadBudget(selectedObjectId);
+            }
         };
     }
 
@@ -386,7 +421,8 @@ function makeEditable(element, onSave) {
 
 // Inline редактирование (dropdown)
 function makeEditableSelect(element, options, onSave) {
-    element.onclick = function () {
+    element.onclick = function (e) {
+        e.stopPropagation();
         const currentValue = element.textContent;
         const select = document.createElement('select');
         select.className = 'inline-edit-select';
@@ -407,13 +443,57 @@ function makeEditableSelect(element, options, onSave) {
             element.textContent = newValue;
         };
 
-        select.onchange = function () {
-            select.blur();
+        select.onchange = async function () {
+            const newValue = select.value;
+            if (newValue !== currentValue) {
+                await onSave(newValue);
+            }
+            element.textContent = newValue;
         };
 
         element.textContent = '';
         element.appendChild(select);
         select.focus();
+        select.click();
+    };
+}
+
+// Inline редактирование (dropdown с иконками)
+function makeEditableSelectWithIcons(element, options, onSave) {
+    element.onclick = function (e) {
+        e.stopPropagation();
+        const currentValue = element.querySelector('.res-type-icon')?.title || element.textContent;
+        const select = document.createElement('select');
+        select.className = 'inline-edit-select';
+
+        options.forEach(opt => {
+            const option = document.createElement('option');
+            option.value = opt;
+            const resType = RESOURCE_TYPES[opt];
+            option.textContent = `${resType.letter} - ${opt}`;
+            if (opt === currentValue) option.selected = true;
+            select.appendChild(option);
+        });
+
+        select.onchange = async function () {
+            const newValue = select.value;
+            if (newValue !== currentValue) {
+                await onSave(newValue);
+            }
+            const resType = RESOURCE_TYPES[newValue];
+            element.innerHTML = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${newValue}">${resType.letter}</div>`;
+        };
+
+        select.onblur = async function () {
+            const newValue = select.value;
+            const resType = RESOURCE_TYPES[newValue];
+            element.innerHTML = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${newValue}">${resType.letter}</div>`;
+        };
+
+        element.textContent = '';
+        element.appendChild(select);
+        select.focus();
+        select.click();
     };
 }
 
