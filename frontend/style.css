@@ -8,9 +8,8 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background: #f0f2f5;
-    /* Slightly darker for contrast */
-    color: #1a1a1a;
+    background: #f4f7fc;
+    color: #333;
     height: 100vh;
     display: flex;
     overflow: hidden;
@@ -18,82 +17,77 @@ body {
 
 /* --- Sidebar --- */
 .sidebar {
-    width: 280px;
-    /* Slightly wider */
-    background: #ffffff;
-    border-right: 1px solid #e4e6eb;
+    width: 260px;
+    background: #fff;
+    border-right: 1px solid #e0e0e0;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    z-index: 20;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
-    /* Subtle shadow */
+    z-index: 10;
 }
 
 .sidebar-header {
-    height: 70px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 0 20px;
+    border-bottom: 1px solid #e0e0e0;
 }
 
-.sidebar-header h2 {
-    font-size: 20px;
+.sidebar-header h2,
+.sidebar-header span {
+    font-size: 18px;
     font-weight: 700;
-    color: #0057d8;
-    /* Brand color */
+    color: #333;
 }
 
-.add-obj-btn {
+.add-obj-btn,
+#add-object {
     background: #0057d8;
     color: #fff;
     border: none;
-    border-radius: 8px;
-    width: 36px;
-    height: 36px;
-    font-size: 22px;
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 87, 216, 0.3);
+    transition: background 0.2s;
 }
 
-.add-obj-btn:hover {
+.add-obj-btn:hover,
+#add-object:hover {
     background: #004bb5;
-    transform: translateY(-1px);
 }
 
 .object-list {
     list-style: none;
     overflow-y: auto;
     flex: 1;
-    padding: 16px 12px;
+    padding: 10px 0;
 }
 
 .object-list li {
-    padding: 14px 16px;
-    margin-bottom: 4px;
+    padding: 12px 20px;
     cursor: pointer;
-    font-size: 15px;
-    color: #444;
-    border-radius: 8px;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
+    font-size: 14px;
+    color: #555;
+    border-left: 3px solid transparent;
+    transition: background 0.2s;
 }
 
 .object-list li:hover {
-    background: #f5f7fa;
+    background: #f0f4ff;
     color: #0057d8;
 }
 
 .object-list li.selected {
-    background: #eef4ff;
+    background: #e6f0ff;
     color: #0057d8;
+    border-left-color: #0057d8;
     font-weight: 600;
 }
 
@@ -104,31 +98,47 @@ body {
     flex-direction: column;
     overflow: hidden;
     position: relative;
-    background: #f0f2f5;
 }
 
-/* --- Tabs Navigation --- */
-.tabs-nav {
+/* --- Tabs Navigation & Header Actions --- */
+#tabs-actions-row {
     height: 60px;
     background: #fff;
-    border-bottom: 1px solid #e4e6eb;
+    border-bottom: 1px solid #e0e0e0;
     display: flex;
     align-items: center;
-    padding: 0 32px;
-    gap: 32px;
+    justify-content: space-between;
+    /* Space between tabs and actions */
+    padding: 0 20px;
     flex-shrink: 0;
+}
+
+#tabs {
+    margin-top: 0 !important;
+    /* Override inline style */
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.tabs-header {
+    display: flex;
+    gap: 20px;
+    height: 100%;
 }
 
 .tab-btn {
     background: none;
     border: none;
-    font-size: 15px;
-    color: #65676b;
+    font-size: 14px;
+    color: #666;
     cursor: pointer;
-    padding: 18px 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
     position: relative;
     font-weight: 500;
-    transition: color 0.2s;
 }
 
 .tab-btn:hover {
@@ -146,88 +156,73 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 2px;
     background: #0057d8;
-    border-radius: 3px 3px 0 0;
 }
 
-/* --- Tabs Actions (Rename/Delete) --- */
-.tabs-actions-row {
-    height: 60px;
+/* --- Object Actions (Rename/Delete) --- */
+#object-actions {
     display: flex;
+    gap: 10px;
     align-items: center;
-    justify-content: flex-end;
-    padding: 0 32px;
-    gap: 12px;
-    flex-shrink: 0;
-    background: #f0f2f5;
-    /* Match body bg */
 }
 
-.action-btn {
+#rename-btn,
+#delete-btn {
     background: #fff;
-    border: 1px solid #d0d7de;
-    padding: 8px 16px;
+    border: 1px solid #ddd;
+    padding: 6px 12px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
-    color: #24292f;
-    transition: all 0.2s;
-    font-weight: 500;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    font-size: 13px;
+    color: #333;
+    transition: 0.2s;
 }
 
-.action-btn:hover {
-    border-color: #b0b8c1;
-    background: #f6f8fa;
+#rename-btn:hover,
+#delete-btn:hover {
+    border-color: #bbb;
+    background: #f9f9f9;
 }
 
 /* --- Tab Content Area --- */
 .tab-content {
     flex: 1;
     overflow-y: auto;
-    padding: 24px 32px;
+    padding: 20px 24px;
 }
 
 /* --- Income Table & Actions --- */
 .tab-actions {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 20px;
-    gap: 12px;
+    margin-bottom: 16px;
+    gap: 10px;
 }
 
 .icon-btn {
     background: #fff;
-    border: 1px solid #e4e6eb;
+    /* White background for better visibility */
+    border: 1px solid #ddd;
     cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: all 0.2s;
+    padding: 6px;
+    border-radius: 4px;
+    transition: background 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #0057d8;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .icon-btn:hover {
-    background: #f0f7ff;
-    border-color: #0057d8;
-}
-
-.icon-btn svg {
-    stroke: currentColor;
-    /* Inherit color */
+    background: #eef2f6;
+    border-color: #ccc;
 }
 
 .income-table-wrap {
     background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-    /* Rounded corners for table */
-    border: 1px solid #e4e6eb;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
 }
 
 .income-table {
@@ -238,26 +233,19 @@ body {
 
 .income-table th,
 .income-table td {
-    padding: 16px 20px;
+    padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid #f0f0f0;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .income-table th {
-    background: #f8f9fa;
+    background: #f9fafb;
     font-weight: 600;
-    color: #555;
-    text-transform: uppercase;
-    font-size: 12px;
-    letter-spacing: 0.5px;
+    color: #444;
 }
 
-.income-table tr:last-child td {
-    border-bottom: none;
-}
-
-/* Center specific columns */
+/* Center specific columns: № (1st), Photo (3rd), Actions (last) */
 .income-table th:nth-child(1),
 .income-table td:nth-child(1),
 .income-table th:nth-child(3),
@@ -267,30 +255,37 @@ body {
     text-align: center;
 }
 
-/* Actions cell */
+/* Ensure action buttons are centered in their cell */
 .income-table td:last-child {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 8px;
+    height: 100%;
 }
 
+.income-table td:last-child .icon-btn {
+    border: none;
+    /* Remove border for table action buttons if desired, or keep */
+    background: transparent;
+}
+
+.income-table td:last-child .icon-btn:hover {
+    background: #f0f0f0;
+}
+
+/* Fix for table cell height to match flex container */
 .income-table td {
     vertical-align: middle;
 }
 
 .income-photo-thumb {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 4px;
     border: 1px solid #eee;
     cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.income-photo-thumb:hover {
-    transform: scale(1.1);
 }
 
 /* --- Modal --- */
@@ -302,43 +297,39 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    /* Glass effect */
+    background: rgba(0, 0, 0, 0.4);
     align-items: center;
     justify-content: center;
 }
 
 .modal-content {
     background: #fff;
-    padding: 32px;
-    border-radius: 16px;
-    width: 440px;
+    padding: 24px;
+    border-radius: 12px;
+    width: 400px;
     max-width: 90%;
     position: relative;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .modal-header h3 {
-    font-size: 20px;
-    font-weight: 700;
-    color: #1a1a1a;
+    font-size: 18px;
+    font-weight: 600;
 }
 
 .modal-close {
     background: none;
     border: none;
-    font-size: 28px;
+    font-size: 24px;
     color: #999;
     cursor: pointer;
-    line-height: 1;
 }
 
 .modal-close:hover {
@@ -346,46 +337,49 @@ body {
 }
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .form-group label {
     display: block;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: #444;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #555;
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+#income-form input,
+#income-form textarea {
     width: 100%;
-    padding: 12px;
+    padding: 10px;
     border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 15px;
+    border-radius: 6px;
+    font-size: 14px;
     font-family: inherit;
-    transition: border-color 0.2s;
+    margin-bottom: 10px;
+    /* Add spacing for form elements */
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+#income-form input:focus,
+#income-form textarea:focus {
     outline: none;
     border-color: #0057d8;
-    box-shadow: 0 0 0 3px rgba(0, 87, 216, 0.1);
 }
 
 .btn-primary {
     width: 100%;
-    padding: 14px;
+    padding: 12px;
     background: #0057d8;
     color: #fff;
     border: none;
-    border-radius: 8px;
-    font-size: 15px;
+    border-radius: 6px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
 }
 
 .btn-primary:hover {
@@ -395,9 +389,8 @@ body {
 /* Photo View Modal */
 #photo-modal-img {
     max-width: 100%;
-    max-height: 85vh;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-height: 80vh;
+    border-radius: 4px;
 }
 
 /* --- Sidebar Toggle (Mobile) --- */
@@ -442,7 +435,7 @@ body {
 
     .main-content {
         margin-left: 0;
-        padding: 16px 8px;
+        padding: 24px 8px;
     }
 
     .sidebar-toggle {
@@ -453,16 +446,12 @@ body {
         z-index: 200;
         background: #fff;
         border: 1px solid #e0e0e0;
-        border-radius: 8px;
+        border-radius: 6px;
         font-size: 1.5em;
         width: 44px;
         height: 44px;
         cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        color: #0057d8;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        box-shadow: 1px 1px 6px #0001;
     }
 
     .sidebar-close {
@@ -507,7 +496,6 @@ body {
         height: auto;
         overflow: visible;
         display: block;
-        background: #fff;
     }
 
     .tab-content {
@@ -551,8 +539,6 @@ body {
     .income-table-wrap {
         overflow: visible;
         box-shadow: none;
-        border: none;
-        border-radius: 0;
     }
 
     .income-table {
