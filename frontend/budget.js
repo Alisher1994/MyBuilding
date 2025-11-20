@@ -725,3 +725,33 @@ async function uploadResourcePhoto(resourceId, file) {
     });
     if (!res.ok) throw new Error('Failed to upload photo');
 }
+
+// Добавление нового этапа
+async function addStage(objectId) {
+    const res = await fetch(`/objects/${objectId}/budget/stages/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'Новый этап' })
+    });
+    if (!res.ok) throw new Error('Failed to add stage');
+}
+
+// Обработчик кнопки "Добавить этап"
+document.addEventListener('DOMContentLoaded', () => {
+    const addStageBtn = document.getElementById('add-budget-group');
+    if (addStageBtn) {
+        addStageBtn.onclick = async () => {
+            if (!selectedObjectId) {
+                alert('Сначала выберите объект');
+                return;
+            }
+            try {
+                await addStage(selectedObjectId);
+                await loadBudget(selectedObjectId);
+            } catch (err) {
+                console.error('Error adding stage:', err);
+                alert('Ошибка при добавлении этапа: ' + err.message);
+            }
+        };
+    }
+});
