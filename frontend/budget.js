@@ -594,8 +594,9 @@ function setupDragDrop(element, type) {
             // TODO: Реализовать перетаскивание видов работ между этапами (пока только внутри этапа)
             // Для простоты пока считаем что перетаскиваем только внутри одного контейнера
         } else if (draggedType === 'resource') {
-            const workTypeId = element.dataset.workTypeId;
-            const resourceIds = [...element.parentElement.querySelectorAll('.budget-resource')].map(el => el.dataset.resourceId);
+            const workTypeId = draggedElement.dataset.workTypeId;
+            const container = draggedElement.parentElement;
+            const resourceIds = [...container.querySelectorAll('.budget-resource')].map(el => el.dataset.resourceId);
             await reorderResources(workTypeId, resourceIds);
         }
 
@@ -719,8 +720,8 @@ async function uploadResourcePhoto(resourceId, file) {
     const formData = new FormData();
     formData.append('photo', file);
 
-    const res = await fetch(`/budget/resources/${resourceId}/photo`, {
-        method: 'POST',
+    const res = await fetch(`/budget/resources/${resourceId}`, {
+        method: 'PUT',
         body: formData
     });
     if (!res.ok) throw new Error('Failed to upload photo');
