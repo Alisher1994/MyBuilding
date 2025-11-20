@@ -1,303 +1,359 @@
-/* --- Модалка просмотра фото --- */
-#photo-modal img {
-    max-width: 80vw;
-    max-height: 70vh;
-    border-radius: 10px;
-    box-shadow: 0 2px 16px #0002;
-    background: #fff;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
-/* --- Таблица прихода --- */
-.income-table-wrap {
-    overflow-x: auto;
-    margin-top: 10px;
-}
-.income-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 4px #0001;
-    font-size: 1em;
-    min-width: 700px;
-}
-.income-table th, .income-table td {
-    border: 1px solid #e0e0e0;
-    padding: 8px 10px;
-    text-align: left;
-    vertical-align: middle;
-}
-/* Center align № (1st), Photo (3rd), and Actions (last) */
-.income-table th:nth-child(1), .income-table td:nth-child(1),
-.income-table th:nth-child(3), .income-table td:nth-child(3),
-.income-table th:last-child, .income-table td:last-child {
-    text-align: center;
-}
-/* Center align actions content specifically */
-.income-table td:last-child {
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f4f7fc;
+    color: #333;
+    height: 100vh;
     display: flex;
-    justify-content: center;
-    gap: 8px;
-    border: none; /* Flexbox breaks border collapse sometimes, but let's keep it simple */
-    border-bottom: 1px solid #e0e0e0; /* Restore bottom border */
-    border-left: 1px solid #e0e0e0;
-}
-/* Fix for flex cell border */
-.income-table tr td:last-child {
-    display: table-cell; /* Revert to table-cell to keep borders working */
-    text-align: center;
-}
-/* Use inline-flex for buttons to center them */
-.income-table td:last-child .icon-btn {
-    display: inline-flex;
-    margin: 0 2px;
+    overflow: hidden;
 }
 
-.income-table th {
-    background: #f3f3f3;
-    font-weight: 600;
+/* --- Sidebar --- */
+.sidebar {
+    width: 260px;
+    background: #fff;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    z-index: 10;
 }
-.income-table tfoot td {
-    background: #f8f9fa;
+
+.sidebar-header {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid #e0e0e0;
 }
-.income-photo-thumb {
-    width: 38px;
-    height: 38px;
-    object-fit: cover;
+
+.sidebar-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.add-obj-btn {
+    background: #0057d8;
+    color: #fff;
+    border: none;
     border-radius: 6px;
-    border: 1px solid #e0e0e0;
-    background: #fafbfc;
-}
-
-/* --- Модальное окно --- */
-.modal {
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: fixed;
-    z-index: 1000;
-    left: 0; top: 0; width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.18);
+    transition: background 0.2s;
 }
-.modal-content {
-    background: #fff;
-    padding: 28px 24px 18px 24px;
-    border-radius: 10px;
-    min-width: 320px;
-    max-width: 95vw;
-    box-shadow: 0 2px 16px #0002;
-    position: relative;
+
+.add-obj-btn:hover {
+    background: #004bb5;
 }
-.modal-close {
-    position: absolute;
-    top: 10px; right: 16px;
-    font-size: 1.5em;
-    color: #888;
+
+.object-list {
+    list-style: none;
+    overflow-y: auto;
+    flex: 1;
+    padding: 10px 0;
+}
+
+.object-list li {
+    padding: 12px 20px;
     cursor: pointer;
-    transition: color 0.2s;
+    font-size: 14px;
+    color: #555;
+    border-left: 3px solid transparent;
+    transition: background 0.2s;
 }
-.modal-close:hover {
+
+.object-list li:hover {
+    background: #f0f4ff;
     color: #0057d8;
 }
-.modal label {
-    display: block;
-    margin-bottom: 10px;
-    font-size: 1em;
-}
-.modal input[type="text"],
-.modal input[type="number"],
-.modal input[type="date"],
-.modal textarea {
-    width: 100%;
-    padding: 7px 10px;
-    border-radius: 6px;
-    border: 1px solid #e0e0e0;
-    margin-top: 2px;
-    font-size: 1em;
-    box-sizing: border-box;
-}
-.modal textarea {
-    min-height: 48px;
-    resize: vertical;
-}
-.modal button[type="submit"] {
-    margin-top: 10px;
-    width: 100%;
+
+.object-list li.selected {
+    background: #e6f0ff;
+    color: #0057d8;
+    border-left-color: #0057d8;
     font-weight: 600;
-    font-size: 1.1em;
 }
-/* --- Кнопки-иконки внутри вкладок --- */
+
+/* --- Main Content --- */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* --- Tabs Navigation --- */
+.tabs-nav {
+    height: 50px;
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+    padding: 14px 0;
+    position: relative;
+    font-weight: 500;
+}
+
+.tab-btn.active {
+    color: #0057d8;
+    font-weight: 600;
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #0057d8;
+}
+
+/* --- Tabs Actions (Rename/Delete) --- */
+.tabs-actions-row {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 24px;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.action-btn {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #333;
+    transition: 0.2s;
+}
+
+.action-btn:hover {
+    border-color: #bbb;
+    background: #f9f9f9;
+}
+
+/* --- Tab Content Area --- */
+.tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+}
+
+/* --- Income Table & Actions --- */
 .tab-actions {
     display: flex;
-    gap: 10px;
     justify-content: flex-end;
-    margin-bottom: 10px;
+    margin-bottom: 16px;
+    gap: 10px;
 }
+
 .icon-btn {
     background: none;
     border: none;
-    padding: 6px;
-    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.18s;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
 }
-.icon-btn:hover, .icon-btn:focus {
-    background: #eaf1fb;
+
+.icon-btn:hover {
+    background: #eef2f6;
 }
-.icon-btn svg {
-    display: block;
+
+.income-table-wrap {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
 }
-/* --- Боковая панель --- */
-.sidebar {
-    width: 260px;
-    background: #f8f9fa;
-    height: 100vh;
-    position: fixed;
-    left: 0; top: 0; bottom: 0;
-    box-shadow: 2px 0 8px #0001;
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
+
+.income-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
 }
-.sidebar-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 18px 10px 18px;
-    font-size: 1.2em;
-    font-weight: 600;
-    border-bottom: 1px solid #e0e0e0;
-}
-#add-object {
-    background: #0057d8;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    font-size: 1.2em;
-    width: 32px; height: 32px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-#add-object:hover {
-    background: #003e9f;
-}
-#object-list {
-    list-style: none;
-    margin: 0;
-    padding: 0 0 0 0;
-    flex: 1;
-    overflow-y: auto;
-}
-#object-list li {
-    padding: 14px 18px;
-    cursor: pointer;
+
+.income-table th,
+.income-table td {
+    padding: 12px 16px;
+    text-align: left;
     border-bottom: 1px solid #f0f0f0;
-    transition: background 0.15s;
-}
-#object-list li.selected, #object-list li:hover {
-    background: #eaf1fb;
-    color: #0057d8;
+    font-size: 13px;
 }
 
-/* --- Основная часть --- */
-.main-content {
-    margin-left: 260px;
-    padding: 32px 32px 32px 32px;
-    min-height: 100vh;
-    background: #f4f6fa;
-    transition: margin-left 0.3s;
-}
-
-@media (max-width: 700px) {
-    .sidebar {
-        width: 80vw;
-        max-width: 320px;
-        transform: translateX(-100%);
-        transition: transform 0.3s;
-    }
-    .sidebar.open {
-        transform: translateX(0);
-    }
-    .main-content {
-        margin-left: 0;
-        padding: 24px 8px;
-    }
-}
-
-/* --- Вкладки --- */
-.tabs-header {
-    display: flex;
-    gap: 0;
-    margin-bottom: 0;
-    background: #f3f3f3;
-    border-radius: 8px 8px 0 0;
-    overflow: hidden;
-    box-shadow: 0 1px 4px #0001;
-}
-.tab-btn {
-    background: #f3f3f3;
-    border: none;
-    border-right: 1px solid #e0e0e0;
-    border-bottom: 2px solid transparent;
-    padding: 10px 28px;
-    font-size: 1em;
-    cursor: pointer;
-    outline: none;
-    transition: background 0.2s, color 0.2s, border-bottom 0.2s;
-}
-.tab-btn:last-child {
-    border-right: none;
-}
-.tab-btn.active {
-    background: #fff;
-    color: #0057d8;
-    border-bottom: 2px solid #0057d8;
+.income-table th {
+    background: #f9fafb;
     font-weight: 600;
-    z-index: 1;
-}
-.tab-content {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 0 0 8px 8px;
-    padding: 24px;
-    min-height: 120px;
-    margin-top: -1px;
+    color: #444;
 }
 
-/* --- Кнопки справа от вкладок --- */
-#tabs-actions-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 0;
+/* Center specific columns: № (1st), Photo (3rd), Actions (last) */
+.income-table th:nth-child(1),
+.income-table td:nth-child(1),
+.income-table th:nth-child(3),
+.income-table td:nth-child(3),
+.income-table th:last-child,
+.income-table td:last-child {
+    text-align: center;
 }
-#object-actions {
+
+/* Ensure action buttons are centered in their cell */
+.income-table td:last-child {
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    height: 100%;
 }
-#object-actions button {
-    background: #f3f3f3;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    padding: 7px 16px;
-    font-size: 1em;
+
+/* Fix for table cell height to match flex container */
+.income-table td {
+    vertical-align: middle;
+}
+
+.income-photo-thumb {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #eee;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
 }
-#object-actions button:hover {
+
+/* --- Modal --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    width: 400px;
+    max-width: 90%;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #555;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #0057d8;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 12px;
     background: #0057d8;
     color: #fff;
-}
-#rename-input {
-    font-size: 1em;
-    padding: 7px 10px;
+    border: none;
     border-radius: 6px;
-    border: 1px solid #e0e0e0;
-    margin-right: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background: #004bb5;
+}
+
+/* Photo View Modal */
+#photo-modal-img {
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 4px;
+}
+
+/* --- Sidebar Toggle (Mobile) --- */
+.sidebar-toggle {
+    display: none;
 }
 
 /* --- Кнопка скрыть боковое меню --- */
@@ -311,143 +367,168 @@
     border: 1px solid #e0e0e0;
     border-radius: 6px;
     font-size: 1.5em;
-    width: 44px; height: 44px;
+    width: 44px;
+    height: 44px;
     cursor: pointer;
     box-shadow: 1px 1px 6px #0001;
 }
+
 @media (max-width: 700px) {
-    .sidebar-close {
-        display: block;
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 80vw;
+        max-width: 320px;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+        box-shadow: 2px 0 8px #0002;
     }
-}
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Arial, sans-serif;
-}
 
-/* --- Вкладки --- */
-.tabs-header {
-    display: flex;
-    gap: 0;
-    margin-bottom: 0;
-    background: #f3f3f3;
-    border-radius: 8px 8px 0 0;
-    overflow: hidden;
-    box-shadow: 0 1px 4px #0001;
-}
-.tab-btn {
-    background: #f3f3f3;
-    border: none;
-    border-right: 1px solid #e0e0e0;
-    border-bottom: 2px solid transparent;
-    padding: 10px 28px;
-    font-size: 1em;
-    cursor: pointer;
-    outline: none;
-    transition: background 0.2s, color 0.2s, border-bottom 0.2s;
-}
-.tab-btn:last-child {
-    border-right: none;
-}
-.tab-btn.active {
-    background: #fff;
-    color: #0057d8;
-    border-bottom: 2px solid #0057d8;
-    font-weight: 600;
-    z-index: 1;
-}
-.tab-content {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 0 0 8px 8px;
-    padding: 24px;
-    min-height: 120px;
-    margin-top: -1px;
-}
+    .sidebar.open {
+        transform: translateX(0);
+    }
 
-/* --- Кнопки справа от вкладок --- */
-#tabs-actions-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 0;
-}
-#object-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-#object-actions button {
-    background: #f3f3f3;
-    border: 1px solid #e0e0e0;
-    border-radius: 6px;
-    padding: 7px 16px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-}
-#object-actions button:hover {
-    background: #0057d8;
-    color: #fff;
-}
-#rename-input {
-    font-size: 1em;
-    padding: 7px 10px;
-    border-radius: 6px;
-    border: 1px solid #e0e0e0;
-    margin-right: 6px;
-}
+    .main-content {
+        margin-left: 0;
+        padding: 24px 8px;
+    }
 
-/* --- Кнопка скрыть боковое меню --- */
-.sidebar-close {
-        display: none;
+    .sidebar-toggle {
+        display: block !important;
         position: fixed;
         top: 16px;
-        left: 80vw;
-        z-index: 201;
+        left: 16px;
+        z-index: 200;
         background: #fff;
         border: 1px solid #e0e0e0;
         border-radius: 6px;
         font-size: 1.5em;
-        width: 44px; height: 44px;
+        width: 44px;
+        height: 44px;
         cursor: pointer;
         box-shadow: 1px 1px 6px #0001;
     }
 
-    @media (max-width: 700px) {
-        .sidebar {
-            position: fixed;
-            left: 0; top: 0; bottom: 0;
-            width: 80vw;
-            max-width: 320px;
-            z-index: 100;
-            transform: translateX(-100%);
-            transition: transform 0.3s;
-            box-shadow: 2px 0 8px #0002;
-        }
-        .sidebar.open {
-            transform: translateX(0);
-        }
-        .main-content {
-            margin-left: 0;
-            padding: 24px 8px;
-        }
-        .sidebar-toggle {
-            display: block !important;
-            position: fixed;
-            top: 16px;
-            left: 16px;
-            z-index: 200;
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 1.5em;
-            width: 44px; height: 44px;
-            cursor: pointer;
-            box-shadow: 1px 1px 6px #0001;
-        }
-        .sidebar-close {
-            display: block;
-        }
+    .sidebar-close {
+        display: block;
     }
+}
+
+/* Print Styles */
+@media print {
+    @page {
+        size: portrait;
+        margin: 1cm;
+    }
+
+    body {
+        background: #fff;
+        font-family: 'Inter', sans-serif;
+        color: #000;
+        height: auto;
+        overflow: visible;
+    }
+
+    /* Hide everything by default */
+    #sidebar,
+    .sidebar-toggle,
+    .tabs-nav,
+    #add-income,
+    #download-income,
+    .income-edit,
+    .income-delete,
+    .modal,
+    #tabs-actions-row,
+    .sidebar-close {
+        display: none !important;
+    }
+
+    /* Show only main content */
+    .main-content {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+        display: block;
+    }
+
+    .tab-content {
+        display: block !important;
+        /* Force show content */
+        padding: 0;
+        overflow: visible;
+    }
+
+    /* Hide other tabs content if any (though usually hidden by JS) */
+    #tab-analysis,
+    #tab-budget,
+    #tab-expense {
+        display: none !important;
+    }
+
+    #tab-income {
+        display: block !important;
+    }
+
+    /* Header */
+    #print-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    #print-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin: 0 0 5px 0;
+    }
+
+    #print-date {
+        font-size: 14px;
+        color: #555;
+        margin: 0;
+    }
+
+    /* Table styling for print */
+    .income-table-wrap {
+        overflow: visible;
+        box-shadow: none;
+    }
+
+    .income-table {
+        width: 100%;
+        border: 1px solid #000;
+        box-shadow: none;
+        min-width: auto;
+        /* Reset min-width */
+    }
+
+    .income-table th,
+    .income-table td {
+        border: 1px solid #000;
+        padding: 6px;
+        font-size: 12px;
+        color: #000;
+    }
+
+    .income-table th {
+        background: #eee !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Hide Actions column */
+    .income-table th:last-child,
+    .income-table td:last-child {
+        display: none;
+    }
+
+    /* Photos */
+    .income-photo-thumb {
+        border: none;
+    }
+}
