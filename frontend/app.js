@@ -241,7 +241,9 @@ async function renderList() {
     const objects = await fetchObjects();
     objects.forEach((obj, index) => {
         const li = document.createElement('li');
-        li.textContent = `${index + 1}. ${obj.name}`;
+        // Icon SVG
+        const icon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px; color: #555;"><path d="M3 21h18M5 21V7l8-4 8 4v14M8 21v-9a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v9"/></svg>`;
+        li.innerHTML = `${icon} <span>${index + 1}. ${obj.name}</span>`;
         li.dataset.id = obj.id; // Store ID for restoration
         li.onclick = () => {
             selectObject(obj.id, li);
