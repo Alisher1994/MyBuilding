@@ -764,8 +764,8 @@ function downloadBudget() {
 
         tableHTML += `
             <tr class="stage-row">
-                <td colspan="8"><strong>${stage.name}</strong></td>
-                <td class="text-right"><strong>${formatNum(stageSum)} сум</strong></td>
+                <td colspan="9"><strong>${stage.name}</strong></td>
+                <td class="text-right"><strong>${formatNum(stageSum)}</strong></td>
             </tr>
         `;
 
@@ -776,12 +776,12 @@ function downloadBudget() {
             tableHTML += `
                 <tr class="work-type-row">
                     <td>${workTypeCounter}.</td>
-                    <td colspan="3">${wt.name}</td>
+                    <td colspan="4">${wt.name}</td>
                     <td>${wt.unit}</td>
                     <td class="text-right">${formatNum(wt.quantity)}</td>
                     <td class="text-right">${formatNum(wtPrice)}</td>
-                    <td class="text-right"><strong>${formatNum(wtSum)} сум</strong></td>
-                    <td colspan="2"></td>
+                    <td class="text-right"><strong>${formatNum(wtSum)}</strong></td>
+                    <td></td>
                 </tr>
             `;
 
@@ -927,23 +927,23 @@ function downloadBudget() {
         <thead>
             <tr>
                 <th style="width: 30px;">№</th>
-                <th>Наименование</th>
-                <th style="width: 50px;">Фото</th>
-                <th style="width: 80px;">Тип</th>
-                <th>Описание</th>
-                <th style="width: 60px;">Ед.изм</th>
-                <th style="width: 80px;">Кол-во</th>
-                <th style="width: 90px;">Цена</th>
-                <th style="width: 100px;">Сумма</th>
-                <th style="width: 120px;">Поставщик</th>
+                <th style="width: 30px;">Фото</th>
+                <th style="width: 70px;">Тип</th>
+                <th>Название</th>
+                <th style="width: 50px;">Ед.изм</th>
+                <th style="width: 70px;">Кол-во</th>
+                <th style="width: 80px;">Цена</th>
+                <th style="width: 90px;">Сумма</th>
+                <th style="width: 150px;">Поставщик</th>
+                <th style="width: 30px;"></th>
             </tr>
         </thead>
         <tbody>
             ${tableHTML}
             <tr class="total-row">
-                <td colspan="7">ИТОГО ПО БЮДЖЕТУ:</td>
-                <td class="text-right">${formatNum(totalSum)} сум</td>
-                <td colspan="2"></td>
+                <td colspan="8">ИТОГО ПО БЮДЖЕТУ:</td>
+                <td class="text-right">${formatNum(totalSum)}</td>
+                <td></td>
             </tr>
         </tbody>
     </table>
