@@ -126,7 +126,7 @@
 
 .analysis-resources-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 20px;
 }
 
@@ -142,54 +142,81 @@
     font-size: 16px;
     font-weight: 700;
     color: #333;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     text-align: center;
     padding-bottom: 12px;
     border-bottom: 2px solid #f0f0f0;
 }
 
-.analysis-resource-plan,
-.analysis-resource-fact {
+.analysis-resource-chart {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 200px;
+    margin-bottom: 20px;
+    padding: 0 10px;
+    position: relative;
+}
+
+.analysis-resource-bar-container {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    margin-bottom: 12px;
-    padding: 8px 12px;
-    background: #f9f9f9;
-    border-radius: 6px;
+    flex: 1;
+    max-width: 80px;
 }
 
-.analysis-resource-plan {
-    background: #e8f4ff;
-}
-
-.analysis-resource-fact {
-    background: #fff3e0;
-}
-
-.analysis-resource-label {
-    font-size: 13px;
+.analysis-resource-bar-label {
+    font-size: 12px;
     font-weight: 600;
     color: #666;
+    margin-bottom: 8px;
 }
 
-.analysis-resource-amount {
-    font-size: 16px;
-    font-weight: 700;
+.analysis-resource-bar-wrapper {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+.analysis-resource-bar {
+    width: 35px;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s ease;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.analysis-resource-bar.plan {
+    background: linear-gradient(180deg, #2196F3 0%, #1976D2 100%);
+}
+
+.analysis-resource-bar.fact {
+    background: linear-gradient(180deg, #f44336 0%, #d32f2f 100%);
+}
+
+.analysis-resource-bar-value {
+    font-size: 12px;
+    font-weight: 600;
     color: #333;
-}
-
-.analysis-resource-plan .analysis-resource-amount {
-    color: #0067c0;
-}
-
-.analysis-resource-fact .analysis-resource-amount {
-    color: #FF9800;
+    text-align: center;
+    margin-top: 4px;
 }
 
 .analysis-resource-diff {
-    margin-top: 12px;
-    padding: 8px 12px;
+    margin-top: 16px;
+    padding: 10px 12px;
     background: #f5f5f5;
     border-radius: 6px;
     text-align: center;

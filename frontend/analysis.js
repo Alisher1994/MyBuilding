@@ -221,20 +221,38 @@ function renderResourceColumns() {
             const diff = data.fact - data.plan;
             const diffClass = diff >= 0 ? 'negative' : 'positive';
             const diffLabel = diff >= 0 ? 'Перерасход' : 'Экономия';
+            const diffSign = diff >= 0 ? '-' : '+';
+
+            // Находим максимальное значение для масштабирования столбцов
+            const maxValue = Math.max(data.plan, data.fact, 1);
+            const planHeight = (data.plan / maxValue) * 100;
+            const factHeight = (data.fact / maxValue) * 100;
 
             return `
                 <div class="analysis-resource-column">
                     <div class="analysis-resource-title">${type}</div>
-                    <div class="analysis-resource-plan">
-                        <span class="analysis-resource-label">План</span>
-                        <span class="analysis-resource-amount">${formatNum(data.plan)}</span>
-                    </div>
-                    <div class="analysis-resource-fact">
-                        <span class="analysis-resource-label">Факт</span>
-                        <span class="analysis-resource-amount">${formatNum(data.fact)}</span>
+                    <div class="analysis-resource-chart">
+                        <div class="analysis-resource-bar-container">
+                            <div class="analysis-resource-bar-label">План</div>
+                            <div class="analysis-resource-bar-wrapper">
+                                <div class="analysis-resource-bar plan" style="height: ${planHeight}%">
+                                    ${planHeight > 15 ? formatNum(data.plan) : ''}
+                                </div>
+                            </div>
+                            <div class="analysis-resource-bar-value">${formatNum(data.plan)}</div>
+                        </div>
+                        <div class="analysis-resource-bar-container">
+                            <div class="analysis-resource-bar-label">Факт</div>
+                            <div class="analysis-resource-bar-wrapper">
+                                <div class="analysis-resource-bar fact" style="height: ${factHeight}%">
+                                    ${factHeight > 15 ? formatNum(data.fact) : ''}
+                                </div>
+                            </div>
+                            <div class="analysis-resource-bar-value">${formatNum(data.fact)}</div>
+                        </div>
                     </div>
                     <div class="analysis-resource-diff ${diffClass}">
-                        ${diffLabel}: ${formatNum(Math.abs(diff))} сум
+                        ${diffSign}${formatNum(Math.abs(diff))}
                     </div>
                 </div>
             `;
