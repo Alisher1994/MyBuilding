@@ -126,8 +126,21 @@
 
 .analysis-resources-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
+}
+
+/* Responsive adjustments to keep 4 per row on wide screens, fewer on smaller */
+@media (max-width: 1200px) {
+    .analysis-resources-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .analysis-resources-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .analysis-resource-column {
@@ -171,6 +184,7 @@
     font-weight: 600;
     color: #666;
     margin-bottom: 8px;
+    order: 1;
 }
 
 .analysis-resource-bar-wrapper {
@@ -181,6 +195,7 @@
     justify-content: center;
     position: relative;
     margin-bottom: 8px;
+    order: 3;
 }
 
 .analysis-resource-bar {
@@ -209,9 +224,10 @@
 .analysis-resource-bar-value {
     font-size: 12px;
     font-weight: 600;
-    color: #333;
+    color: #000;
     text-align: center;
-    margin-top: 4px;
+    margin-bottom: 8px;
+    order: 2;
 }
 
 .analysis-resource-diff {
