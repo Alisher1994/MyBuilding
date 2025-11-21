@@ -395,23 +395,166 @@ if (sidebarClose) {
     };
 }
 
-// Print Button Logic
-document.addEventListener('DOMContentLoaded', () => {
-    const printBtn = document.getElementById('download-income');
-    if (printBtn) {
-        printBtn.onclick = function () {
-            // Update header
-            const title = document.getElementById('print-title');
-            const date = document.getElementById('print-date');
-            const objName = document.querySelector('#object-list li.selected')?.textContent || 'Объект';
+// Генерация HTML для скачивания/печати прихода
+function downloadIncome() {
+    if (!selectedId || !incomeRows || incomeRows.length === 0) {
+        alert('Нет данных для скачивания');
+        return;
+    }
 
-            if (title) title.textContent = `Отчет: ${objName}`;
-            if (date) {
-                const now = new Date();
-                date.textContent = `Дата формирования: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+    // Получаем название объекта
+    const objectName = document.querySelector('#object-list li.selected')?.textContent.trim() || 'Объект';
+
+    // Форматируем дату
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    // Генерируем HTML таблицы
+    let tableHTML = '';
+    let total = 0;
+
+    incomeRows.forEach((row, idx) => {
+        const photoHtml = row.photo
+            ? `<img src="${row.photo}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 3px;" alt="Фото">`
+            : '<span style="color: #ccc; font-size: 10px;">—</span>';
+
+        tableHTML += `
+            <tr>
+                <td>${idx + 1}</td>
+                <td>${row.date}</td>
+                <td>${photoHtml}</td>
+                <td class="text-right">${formatNumber(row.amount)}</td>
+                <td>${row.sender || row.from || ''}</td>
+                <td>${row.receiver || row.to || ''}</td>
+                <td>${row.comment || ''}</td>
+            </tr>
+        `;
+        total += Number(row.amount) || 0;
+    });
+
+    // Полный HTML документ
+    const html = `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Приход - ${objectName}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #fff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .header p {
+            font-size: 14px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 12px;
+        }
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .total-row {
+            background-color: #f0f7ff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .total-row td {
+            padding: 12px 8px;
+            border: 2px solid #0067c0;
+        }
+        @media print {
+            body {
+                padding: 10px;
             }
+            .header {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>${objectName}</h1>
+        <p>Дата формирования: ${dateStr}</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 30px;">№</th>
+                <th style="width: 100px;">Дата</th>
+                <th style="width: 60px;">Фото</th>
+                <th style="width: 120px;">Сумма</th>
+                <th style="width: 150px;">Кто передал</th>
+                <th style="width: 150px;">Кто получил</th>
+                <th>Комментарии</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${tableHTML}
+            <tr class="total-row">
+                <td colspan="3">ИТОГО:</td>
+                <td class="text-right">${formatNumber(total)}</td>
+                <td colspan="3"></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
+    `;
 
-            window.print();
+    // Открываем в новом окне
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    // Автоматически открываем диалог печати
+    printWindow.onload = function () {
+        printWindow.print();
+    };
+}
+
+// Download Button Logic
+document.addEventListener('DOMContentLoaded', () => {
+    const downloadBtn = document.getElementById('download-income');
+    if (downloadBtn) {
+        downloadBtn.onclick = () => {
+            downloadIncome();
         };
     }
 });
