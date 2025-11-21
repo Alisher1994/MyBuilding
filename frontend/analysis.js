@@ -215,20 +215,26 @@ function renderProgressBars() {
 
 // Рендеринг колонок по типам ресурсов
 function renderResourceColumns() {
-    return Object.entries(analysisData.resources)
-        .filter(([type, data]) => data.plan > 0 || data.fact > 0)
-        .map(([type, data]) => {
-            const diff = data.fact - data.plan;
-            const diffClass = diff >= 0 ? 'negative' : 'positive';
-            const diffLabel = diff >= 0 ? 'Перерасход' : 'Экономия';
-            const diffSign = diff >= 0 ? '-' : '+';
+    // Показываем все типы ресурсов в определенном порядке
+    const resourceOrder = [
+        'Трудоресурсы', 'Материал', 'Доставка', 'Оборудование',
+        'Мебель', 'Инструменты', 'Коммуналка', 'Документация',
+        'Расходные материалы', 'Питание'
+    ];
 
-            // Находим максимальное значение для масштабирования столбцов
-            const maxValue = Math.max(data.plan, data.fact, 1);
-            const planHeight = (data.plan / maxValue) * 100;
-            const factHeight = (data.fact / maxValue) * 100;
+    return resourceOrder.map(type => {
+        const data = analysisData.resources[type] || { plan: 0, fact: 0 };
+        const diff = data.fact - data.plan;
+        const diffClass = diff >= 0 ? 'negative' : 'positive';
+        const diffLabel = diff >= 0 ? 'Перерасход' : 'Экономия';
+        const diffSign = diff >= 0 ? '-' : '+';
 
-            return `
+        // Находим максимальное значение для масштабирования столбцов
+        const maxValue = Math.max(data.plan, data.fact, 1);
+        const planHeight = (data.plan / maxValue) * 100;
+        const factHeight = (data.fact / maxValue) * 100;
+
+        return `
                 <div class="analysis-resource-column">
                     <div class="analysis-resource-title">${type}</div>
                     <div class="analysis-resource-chart">
