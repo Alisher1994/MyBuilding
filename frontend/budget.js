@@ -764,8 +764,9 @@ function downloadBudget() {
 
         tableHTML += `
             <tr class="stage-row">
-                <td colspan="9"><strong>${stage.name}</strong></td>
+                <td colspan="7"><strong>${stage.name}</strong></td>
                 <td class="text-right"><strong>${formatNum(stageSum)}</strong></td>
+                <td colspan="2"></td>
             </tr>
         `;
 
@@ -776,12 +777,12 @@ function downloadBudget() {
             tableHTML += `
                 <tr class="work-type-row">
                     <td>${workTypeCounter}.</td>
-                    <td colspan="4">${wt.name}</td>
+                    <td colspan="2">${wt.name}</td>
                     <td>${wt.unit}</td>
                     <td class="text-right">${formatNum(wt.quantity)}</td>
                     <td class="text-right">${formatNum(wtPrice)}</td>
                     <td class="text-right"><strong>${formatNum(wtSum)}</strong></td>
-                    <td></td>
+                    <td colspan="2"></td>
                 </tr>
             `;
 
