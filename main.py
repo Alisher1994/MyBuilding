@@ -225,6 +225,22 @@ async def create_tables():
                 order_index INTEGER NOT NULL DEFAULT 0
             );
         """)
+        
+        # Таблица resource_expenses (фактические расходы по ресурсам)
+        await connection.execute("""
+            CREATE TABLE IF NOT EXISTS resource_expenses (
+                id SERIAL PRIMARY KEY,
+                resource_id INTEGER NOT NULL REFERENCES budget_resources(id) ON DELETE CASCADE,
+                date DATE NOT NULL,
+                actual_quantity NUMERIC(15,3) NOT NULL,
+                actual_price NUMERIC(15,2) NOT NULL,
+                receipt_photo_1 TEXT,
+                receipt_photo_2 TEXT,
+                receipt_photo_3 TEXT,
+                comment TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -272,4 +288,7 @@ def root_redirect():
 
 # === Budget API ===
 exec(open("budget_api.py", encoding="utf-8").read())
+
+# === Expense API ===
+exec(open("expense_api.py", encoding="utf-8").read())
 
