@@ -737,8 +737,246 @@ async function addStage(objectId) {
     if (!res.ok) throw new Error('Failed to add stage');
 }
 
-// Обработчик кнопки "Добавить этап"
+// Генерация HTML для скачивания/печати бюджета
+function downloadBudget() {
+    if (!selectedObjectId || !budgetData || budgetData.length === 0) {
+        alert('Нет данных для скачивания');
+        return;
+    }
+
+    // Получаем название объекта
+    const objectName = document.querySelector('#object-list li.selected')?.textContent.trim() || 'Объект';
+
+    // Форматируем дату
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    // Генерируем HTML таблицы
+    let tableHTML = '';
+    let workTypeCounter = 1;
+
+    budgetData.forEach((stage) => {
+        const stageSum = stage.work_types.reduce((sum, wt) => sum + calculateWorkTypeSum(wt), 0);
+
+        tableHTML += `
+            <tr class="stage-row">
+                <td colspan="9"><strong>${stage.name}</strong></td>
+                <td class="text-right"><strong>${formatNum(stageSum)} сум</strong></td>
+            </tr>
+        `;
+
+        stage.work_types.forEach((wt) => {
+            const wtSum = calculateWorkTypeSum(wt);
+            const wtPrice = wt.quantity > 0 ? wtSum / wt.quantity : 0;
+
+            tableHTML += `
+                <tr class="work-type-row">
+                    <td>${workTypeCounter}.</td>
+                    <td colspan="3">${wt.name}</td>
+                    <td>${wt.unit}</td>
+                    <td class="text-right">${formatNum(wt.quantity)}</td>
+                    <td class="text-right">${formatNum(wtPrice)}</td>
+                    <td class="text-right"><strong>${formatNum(wtSum)} сум</strong></td>
+                    <td colspan="2"></td>
+                </tr>
+            `;
+
+            if (wt.resources.length > 0) {
+                tableHTML += `
+                    <tr class="resource-header-row">
+                        <td></td>
+                        <td>№</td>
+                        <td>Тип</td>
+                        <td>Название</td>
+                        <td>Ед.изм</td>
+                        <td>Кол-во</td>
+                        <td>Цена</td>
+                        <td>Сумма</td>
+                        <td>Поставщик</td>
+                        <td></td>
+                    </tr>
+                `;
+
+                wt.resources.forEach((res, resIdx) => {
+                    const resSum = res.quantity * res.price;
+                    const resType = RESOURCE_TYPES[res.resource_type] || RESOURCE_TYPES['Материал'];
+
+                    tableHTML += `
+                        <tr class="resource-row">
+                            <td></td>
+                            <td>${workTypeCounter}.${resIdx + 1}</td>
+                            <td><span class="type-badge" style="background-color: ${resType.color}">${res.resource_type}</span></td>
+                            <td>${res.name}</td>
+                            <td>${res.unit}</td>
+                            <td class="text-right">${formatNum(res.quantity)}</td>
+                            <td class="text-right">${formatNum(res.price)}</td>
+                            <td class="text-right">${formatNum(resSum)}</td>
+                            <td>${res.supplier || ''}</td>
+                            <td></td>
+                        </tr>
+                    `;
+                });
+            }
+
+            workTypeCounter++;
+        });
+    });
+
+    const totalSum = calculateTotalSum();
+
+    // Полный HTML документ
+    const html = `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бюджет - ${objectName}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #fff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .header p {
+            font-size: 14px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 12px;
+        }
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .stage-row td {
+            background-color: #e8f4ff;
+            font-size: 14px;
+            padding: 12px 8px;
+        }
+        .work-type-row {
+            background-color: #f9f9f9;
+        }
+        .work-type-row td {
+            font-weight: 600;
+        }
+        .resource-header-row {
+            background-color: #f0f0f0;
+            font-size: 10px;
+        }
+        .resource-header-row td {
+            font-weight: bold;
+            color: #666;
+        }
+        .resource-row td {
+            padding: 6px 8px;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .type-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .total-row {
+            background-color: #f0f7ff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .total-row td {
+            padding: 12px 8px;
+            border: 2px solid #0067c0;
+        }
+        @media print {
+            body {
+                padding: 10px;
+            }
+            .header {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>${objectName}</h1>
+        <p>Дата формирования: ${dateStr}</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 40px;">№</th>
+                <th>Наименование</th>
+                <th style="width: 100px;">Тип</th>
+                <th>Описание</th>
+                <th style="width: 80px;">Ед.изм</th>
+                <th style="width: 100px;">Кол-во</th>
+                <th style="width: 100px;">Цена</th>
+                <th style="width: 120px;">Сумма</th>
+                <th style="width: 150px;">Поставщик</th>
+                <th style="width: 30px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            ${tableHTML}
+            <tr class="total-row">
+                <td colspan="7">ИТОГО ПО БЮДЖЕТУ:</td>
+                <td class="text-right">${formatNum(totalSum)} сум</td>
+                <td colspan="2"></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
+    `;
+
+    // Открываем в новом окне
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    // Автоматически открываем диалог печати
+    printWindow.onload = function () {
+        printWindow.print();
+    };
+}
+
+// Обработчики кнопок
 document.addEventListener('DOMContentLoaded', () => {
+    // Кнопка "Добавить этап"
     const addStageBtn = document.getElementById('add-budget-group');
     if (addStageBtn) {
         addStageBtn.onclick = async () => {
@@ -753,6 +991,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error adding stage:', err);
                 alert('Ошибка при добавлении этапа: ' + err.message);
             }
+        };
+    }
+
+    // Кнопка "Скачать"
+    const downloadBtn = document.getElementById('download-budget');
+    if (downloadBtn) {
+        downloadBtn.onclick = () => {
+            downloadBudget();
         };
     }
 });
