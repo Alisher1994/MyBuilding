@@ -457,3 +457,40 @@
         margin: 2px 16px;
     }
 }
+/* Over budget indicator */
+.over-budget {
+    color: #d32f2f !important;
+    font-weight: 700;
+}
+
+/* Expense receipt thumbnails */
+.receipt-thumb {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+    border: 1px solid #ddd;
+}
+
+.expense-list {
+    margin-top: 10px;
+    padding-left: 40px;
+}
+
+.expense-item {
+    padding: 8px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    font-size: 0.95em;
+}
+
+.expense-receipts {
+    display: flex;
+    gap: 5px;
+}
