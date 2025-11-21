@@ -1,4 +1,7 @@
 # === Expense API Endpoints ===
+from fastapi import Request, HTTPException
+import time
+from datetime import date as dtdate
 
 # Get budget tree with expense data
 @app.get("/objects/{object_id}/expenses/tree")
@@ -52,53 +55,46 @@ async def get_expenses_tree(object_id: int):
 
 # Add expense for resource
 @app.post("/budget/resources/{resource_id}/expenses/")
-async def add_expense(resource_id: int, data: dict = None, 
-                     receipt_1: UploadFile = File(None),
-                     receipt_2: UploadFile = File(None),
-                     receipt_3: UploadFile = File(None)):
+async def add_expense(resource_id: int, request: Request):
     """Добавить расход для ресурса"""
-    from fastapi import Form
-    import json
-    
-    # Handle form data
-    date = data.get("date") if data else None
-    actual_quantity = float(data.get("actual_quantity", 0)) if data else 0
-    actual_price = float(data.get("actual_price", 0)) if data else 0
-    comment = data.get("comment", "") if data else ""
-    
-    # Save receipt photos
-    receipt_paths = [None, None, None]
-    for idx, receipt in enumerate([receipt_1, receipt_2, receipt_3]):
-        if receipt and receipt.filename:
-            filename = f"{int(time.time() * 1000)}_{receipt.filename}"
-            filepath = os.path.join(UPLOAD_DIR, filename)
-            with open(filepath, "wb") as f:
-                f.write(await receipt.read())
-            receipt_paths[idx] = f"/uploads/{filename}"
-    
-    async with app.state.db.acquire() as conn:
-        row = await conn.fetchrow("""
-            INSERT INTO resource_expenses 
-            (resource_id, date, actual_quantity, actual_price, receipt_photo_1, receipt_photo_2, receipt_photo_3, comment)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING *
-        """, resource_id, date, actual_quantity, actual_price, 
-            receipt_paths[0], receipt_paths[1], receipt_paths[2], comment)
-    
-    return dict(row)
+    try:
+        data = await request.json()
+        
+        # Default to current date if not provided
+        date_str = data.get("date")
+        if not date_str:
+            date_val = dtdate.today()
+        else:
+            date_val = date_str
+            
+        actual_quantity = float(data.get("actual_quantity", 0))
+        actual_price = float(data.get("actual_price", 0))
+        comment = data.get("comment", "")
+        
+        async with app.state.db.acquire() as conn:
+            row = await conn.fetchrow("""
+                INSERT INTO resource_expenses 
+                (resource_id, date, actual_quantity, actual_price, comment)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING *
+            """, resource_id, date_val, actual_quantity, actual_price, comment)
+        
+        return dict(row)
+    except Exception as e:
+        print(f"Error adding expense: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Update expense
 @app.put("/expenses/{expense_id}")
-async def update_expense(expense_id: int, data: dict = None,
-                        receipt_1: UploadFile = File(None),
-                        receipt_2: UploadFile = File(None),
-                        receipt_3: UploadFile = File(None)):
+async def update_expense(expense_id: int, request: Request):
     """Обновить расход"""
-    updates = []
-    params = []
-    param_count = 1
-    
-    if data:
+    try:
+        data = await request.json()
+        
+        updates = []
+        params = []
+        param_count = 1
+        
         if "date" in data:
             updates.append(f"date=${param_count}")
             params.append(data["date"])
@@ -115,26 +111,50 @@ async def update_expense(expense_id: int, data: dict = None,
             updates.append(f"comment=${param_count}")
             params.append(data["comment"])
             param_count += 1
-    
-    # Handle receipt photos
-    for idx, receipt in enumerate([receipt_1, receipt_2, receipt_3], 1):
-        if receipt and receipt.filename:
-            filename = f"{int(time.time() * 1000)}_{receipt.filename}"
-            filepath = os.path.join(UPLOAD_DIR, filename)
-            with open(filepath, "wb") as f:
-                f.write(await receipt.read())
-            updates.append(f"receipt_photo_{idx}=${param_count}")
-            params.append(f"/uploads/{filename}")
-            param_count += 1
-    
-    if updates:
-        params.append(expense_id)
-        query = f"UPDATE resource_expenses SET {', '.join(updates)} WHERE id=${param_count} RETURNING *"
+        
+        if updates:
+            params.append(expense_id)
+            query = f"UPDATE resource_expenses SET {', '.join(updates)} WHERE id=${param_count} RETURNING *"
+            async with app.state.db.acquire() as conn:
+                row = await conn.fetchrow(query, *params)
+            return dict(row) if row else {"error": "Not found"}
+        
+        return {"error": "No updates"}
+    except Exception as e:
+        print(f"Error updating expense: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Upload receipt photo
+@app.put("/expenses/{expense_id}/receipt/{receipt_num}")
+async def upload_receipt(expense_id: int, receipt_num: int, request: Request):
+    """Загрузить фото чека"""
+    try:
+        form = await request.form()
+        file = form.get(f"receipt_{receipt_num}")
+        
+        if not file:
+            raise HTTPException(status_code=400, detail="No file provided")
+        
+        # Save file
+        filename = f"receipt_{expense_id}_{receipt_num}_{int(time.time() * 1000)}.jpg"
+        filepath = os.path.join(UPLOAD_DIR, filename)
+        
+        content = await file.read()
+        with open(filepath, "wb") as f:
+            f.write(content)
+        
+        # Update database
+        field_name = f"receipt_photo_{receipt_num}"
         async with app.state.db.acquire() as conn:
-            row = await conn.fetchrow(query, *params)
+            row = await conn.fetchrow(
+                f"UPDATE resource_expenses SET {field_name}=$1 WHERE id=$2 RETURNING *",
+                f"/uploads/{filename}", expense_id
+            )
+        
         return dict(row) if row else {"error": "Not found"}
-    
-    return {"error": "No updates"}
+    except Exception as e:
+        print(f"Error uploading receipt: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Delete expense
 @app.delete("/expenses/{expense_id}")
