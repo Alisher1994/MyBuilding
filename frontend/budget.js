@@ -790,6 +790,7 @@ function downloadBudget() {
                     <tr class="resource-header-row">
                         <td></td>
                         <td>№</td>
+                        <td>Фото</td>
                         <td>Тип</td>
                         <td>Название</td>
                         <td>Ед.изм</td>
@@ -797,18 +798,21 @@ function downloadBudget() {
                         <td>Цена</td>
                         <td>Сумма</td>
                         <td>Поставщик</td>
-                        <td></td>
                     </tr>
                 `;
 
                 wt.resources.forEach((res, resIdx) => {
                     const resSum = res.quantity * res.price;
                     const resType = RESOURCE_TYPES[res.resource_type] || RESOURCE_TYPES['Материал'];
+                    const photoHtml = res.photo
+                        ? `<img src="${res.photo}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 3px;" alt="Фото">`
+                        : '<span style="color: #ccc; font-size: 10px;">—</span>';
 
                     tableHTML += `
                         <tr class="resource-row">
                             <td></td>
                             <td>${workTypeCounter}.${resIdx + 1}</td>
+                            <td>${photoHtml}</td>
                             <td><span class="type-badge" style="background-color: ${resType.color}">${res.resource_type}</span></td>
                             <td>${res.name}</td>
                             <td>${res.unit}</td>
@@ -816,7 +820,6 @@ function downloadBudget() {
                             <td class="text-right">${formatNum(res.price)}</td>
                             <td class="text-right">${formatNum(resSum)}</td>
                             <td>${res.supplier || ''}</td>
-                            <td></td>
                         </tr>
                     `;
                 });
@@ -879,14 +882,15 @@ function downloadBudget() {
         }
         .stage-row td {
             background-color: #e8f4ff;
-            font-size: 14px;
-            padding: 12px 8px;
+            font-size: 13px;
+            padding: 6px 8px;
         }
         .work-type-row {
             background-color: #f9f9f9;
         }
         .work-type-row td {
             font-weight: 600;
+            padding: 6px 8px;
         }
         .resource-header-row {
             background-color: #f0f0f0;
@@ -938,16 +942,16 @@ function downloadBudget() {
     <table>
         <thead>
             <tr>
-                <th style="width: 40px;">№</th>
+                <th style="width: 30px;">№</th>
                 <th>Наименование</th>
-                <th style="width: 100px;">Тип</th>
+                <th style="width: 50px;">Фото</th>
+                <th style="width: 80px;">Тип</th>
                 <th>Описание</th>
-                <th style="width: 80px;">Ед.изм</th>
-                <th style="width: 100px;">Кол-во</th>
-                <th style="width: 100px;">Цена</th>
-                <th style="width: 120px;">Сумма</th>
-                <th style="width: 150px;">Поставщик</th>
-                <th style="width: 30px;"></th>
+                <th style="width: 60px;">Ед.изм</th>
+                <th style="width: 80px;">Кол-во</th>
+                <th style="width: 90px;">Цена</th>
+                <th style="width: 100px;">Сумма</th>
+                <th style="width: 120px;">Поставщик</th>
             </tr>
         </thead>
         <tbody>
