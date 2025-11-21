@@ -451,5 +451,285 @@ function fmt(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
+// Генерация HTML для скачивания/печати расходов
+function downloadExpense() {
+    if (!selectedExpenseObjectId || !expenseData || expenseData.length === 0) {
+        alert('Нет данных для скачивания');
+        return;
+    }
+
+    // Получаем название объекта
+    const objectName = document.querySelector('#object-list li.selected')?.textContent.trim() || 'Объект';
+
+    // Форматируем дату
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    // Генерируем HTML таблицы
+    let tableHTML = '';
+    let workTypeCounter = 1;
+
+    expenseData.forEach((stage) => {
+        const stageBudget = calcStageBudget(stage);
+        const stageActual = calcStageActual(stage);
+
+        tableHTML += `
+            <tr class="stage-row">
+                <td colspan="8"><strong>${stage.name}</strong></td>
+                <td class="text-right"><strong>Бюджет: ${fmt(stageBudget)}</strong></td>
+                <td class="text-right"><strong class="${stageActual > stageBudget ? 'over-budget' : ''}">Факт: ${fmt(stageActual)}</strong></td>
+                <td colspan="3"></td>
+            </tr>
+        `;
+
+        if (stage.work_types && stage.work_types.length > 0) {
+            stage.work_types.forEach((wt) => {
+                const wtBudget = calcWTBudget(wt);
+                const wtActual = calcWTActual(wt);
+
+                tableHTML += `
+                    <tr class="work-type-row">
+                        <td>${workTypeCounter}.</td>
+                        <td colspan="3"><strong>${wt.name} (${wt.unit})</strong></td>
+                        <td colspan="4"></td>
+                        <td class="text-right"><strong>Бюджет: ${fmt(wtBudget)}</strong></td>
+                        <td class="text-right"><strong class="${wtActual > wtBudget ? 'over-budget' : ''}">Факт: ${fmt(wtActual)}</strong></td>
+                        <td colspan="3"></td>
+                    </tr>
+                `;
+
+                if (wt.resources && wt.resources.length > 0) {
+                    wt.resources.forEach((res, resIdx) => {
+                        const budgetSum = (res.quantity || 0) * (res.price || 0);
+                        const expenses = res.expenses || [];
+                        const totalActualSum = expenses.reduce((sum, e) => sum + ((e.actual_quantity || 0) * (e.actual_price || 0)), 0);
+                        const resType = EXP_RESOURCE_TYPES[res.resource_type] || EXP_RESOURCE_TYPES['Материал'];
+                        const photoHtml = res.photo
+                            ? `<img src="${res.photo}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 3px;" alt="Фото">`
+                            : '<span style="color: #ccc; font-size: 10px;">—</span>';
+
+                        tableHTML += `
+                            <tr class="resource-row">
+                                <td>${workTypeCounter}.${resIdx + 1}</td>
+                                <td>${photoHtml}</td>
+                                <td><span class="type-badge" style="background-color: ${resType.color}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">${res.resource_type}</span></td>
+                                <td>${res.name}</td>
+                                <td>${res.unit}</td>
+                                <td class="text-right">${fmt(res.quantity)}</td>
+                                <td class="text-right">${fmt(res.price)}</td>
+                                <td class="text-right">${fmt(budgetSum)}</td>
+                                <td class="text-right ${totalActualSum > budgetSum ? 'over-budget' : ''}">${totalActualSum > 0 ? fmt(totalActualSum) : '—'}</td>
+                                <td colspan="3"></td>
+                            </tr>
+                        `;
+
+                        // Добавляем строки расходов
+                        if (expenses.length > 0) {
+                            expenses.forEach((exp, expIdx) => {
+                                const expSum = (exp.actual_quantity || 0) * (exp.actual_price || 0);
+                                const receiptHtml = [
+                                    exp.receipt_photo_1,
+                                    exp.receipt_photo_2,
+                                    exp.receipt_photo_3
+                                ].filter(Boolean).map(url => 
+                                    `<img src="${url}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 2px; margin-right: 2px;" alt="Чек">`
+                                ).join('') || '—';
+
+                                tableHTML += `
+                                    <tr class="expense-row">
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td class="text-right" style="font-size: 11px;">${fmt(exp.actual_quantity)}</td>
+                                        <td class="text-right" style="font-size: 11px;">${fmt(exp.actual_price)}</td>
+                                        <td class="text-right" style="font-size: 11px;">${fmt(expSum)}</td>
+                                        <td></td>
+                                        <td style="font-size: 11px; color: #666;">${exp.date || '—'}</td>
+                                        <td style="font-size: 11px;">${receiptHtml}</td>
+                                        <td style="font-size: 11px; color: #666;">${exp.comment || ''}</td>
+                                    </tr>
+                                `;
+                            });
+                        }
+                    });
+                }
+
+                workTypeCounter++;
+            });
+        }
+    });
+
+    const totalBudget = expenseData.reduce((sum, s) => sum + calcStageBudget(s), 0);
+    const totalActual = expenseData.reduce((sum, s) => sum + calcStageActual(s), 0);
+
+    // Полный HTML документ
+    const html = `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расход - ${objectName}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #fff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
+        }
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        .header p {
+            font-size: 14px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            font-size: 12px;
+        }
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .stage-row td {
+            background-color: #e8f4ff;
+            font-size: 13px;
+            padding: 6px 8px;
+        }
+        .work-type-row {
+            background-color: #f9f9f9;
+        }
+        .work-type-row td {
+            font-weight: 600;
+            padding: 6px 8px;
+        }
+        .resource-row td {
+            padding: 6px 8px;
+        }
+        .expense-row {
+            background-color: #fafafa;
+        }
+        .expense-row td {
+            padding: 4px 8px;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .type-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .total-row {
+            background-color: #f0f7ff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .total-row td {
+            padding: 12px 8px;
+            border: 2px solid #0067c0;
+        }
+        .over-budget {
+            color: #d32f2f !important;
+            font-weight: 700;
+        }
+        @media print {
+            body {
+                padding: 10px;
+            }
+            .header {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Расход - ${objectName}</h1>
+        <p>Дата формирования: ${dateStr}</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 30px;">№</th>
+                <th style="width: 40px;">Фото</th>
+                <th style="width: 80px;">Тип</th>
+                <th>Название</th>
+                <th style="width: 60px;">Ед.изм</th>
+                <th style="width: 70px;">Кол-во (план)</th>
+                <th style="width: 80px;">Цена (план)</th>
+                <th style="width: 90px;">Сумма (план)</th>
+                <th style="width: 90px;">Сумма (факт)</th>
+                <th style="width: 100px;">Дата</th>
+                <th style="width: 100px;">Чеки</th>
+                <th>Комментарий</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${tableHTML}
+            <tr class="total-row">
+                <td colspan="8">ИТОГО:</td>
+                <td class="text-right"><strong>Бюджет: ${fmt(totalBudget)}</strong></td>
+                <td class="text-right"><strong class="${totalActual > totalBudget ? 'over-budget' : ''}">Факт: ${fmt(totalActual)}</strong></td>
+                <td colspan="3"></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
+    `;
+
+    // Открываем в новом окне
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    // Автоматически открываем диалог печати
+    printWindow.onload = function () {
+        printWindow.print();
+    };
+}
+
+// Обработчики кнопок
+document.addEventListener('DOMContentLoaded', () => {
+    // Кнопка "Скачать" для расходов
+    const downloadBtn = document.getElementById('download-expense');
+    if (downloadBtn) {
+        downloadBtn.onclick = () => {
+            downloadExpense();
+        };
+    }
+});
+
 window.loadExpenses = loadExpenses;
 window.deleteExpense = deleteExpense;
