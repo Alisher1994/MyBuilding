@@ -1,0 +1,143 @@
+/* === EXPENSE TAB STYLES === */
+
+#expense-container {
+    padding: 20px 0;
+}
+
+/* Expense resource table */
+.budget-resource-header {
+    display: grid;
+    grid-template-columns:
+        50px
+        /* № */
+        60px
+        /* Фото */
+        60px
+        /* Тип */
+        200px
+        /* Название */
+        60px
+        /* Ед.изм */
+        100px
+        /* Кол-во (план) */
+        100px
+        /* Цена (план) */
+        120px
+        /* Сумма (план) */
+        100px
+        /* Кол-во (факт) */
+        120px
+        /* Цена (факт) */
+        120px
+        /* Сумма (факт) */
+        80px
+        /* Чеки */
+        1fr;
+    /* Комментарий */
+    gap: 8px;
+    padding: 10px;
+    background: #f5f5f5;
+    font-weight: 600;
+    font-size: 12px;
+    border-bottom: 2px solid #ddd;
+}
+
+.budget-resource {
+    display: grid;
+    grid-template-columns:
+        50px
+        /* № */
+        60px
+        /* Фото */
+        60px
+        /* Тип */
+        200px
+        /* Название */
+        60px
+        /* Ед.изм */
+        100px
+        /* Кол-во (план) */
+        100px
+        /* Цена (план) */
+        120px
+        /* Сумма (план) */
+        100px
+        /* Кол-во (факт) */
+        120px
+        /* Цена (факт) */
+        120px
+        /* Сумма (факт) */
+        80px
+        /* Чеки */
+        1fr;
+    /* Комментарий */
+    gap: 8px;
+    padding: 10px;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+}
+
+.budget-resource:hover {
+    background: #f9f9f9;
+}
+
+/* Input fields in expense table */
+.expense-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.expense-input:focus {
+    outline: none;
+    border-color: #0057d8;
+    box-shadow: 0 0 0 2px rgba(0, 87, 216, 0.1);
+}
+
+/* Receipt button */
+.btn-upload-receipt {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn-upload-receipt:hover {
+    background: #e8e8e8;
+}
+
+/* Over budget indicator */
+.over-budget {
+    color: #d32f2f !important;
+    font-weight: 700;
+}
+
+/* Resource type icon */
+.res-type-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.res-type-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Photo thumbnail */
+.res-photo-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
