@@ -231,6 +231,11 @@ function setActiveTab(tab) {
     if (tab === 'budget' && selectedId && window.loadBudget) {
         window.loadBudget(selectedId);
     }
+
+    // Если выбрана вкладка "расход" — обновить данные
+    if (tab === 'expense' && selectedId && window.loadExpenses) {
+        window.loadExpenses(selectedId);
+    }
 }
 
 // Вкладки переключение (инициализация сразу после определения)
