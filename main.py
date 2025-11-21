@@ -11,6 +11,9 @@ import time
 from typing import List
 from datetime import date as dtdate
 import re
+import tempfile
+import subprocess
+import shutil
 
 app = FastAPI()
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -118,6 +121,61 @@ async def add_income(object_id: int, date: str = Form(...), amount: float = Form
         tb = traceback.format_exc()
         print(f"Error in add_income: {e}\n{tb}")
         raise HTTPException(status_code=500, detail=f"{e}\n{tb}")
+
+
+@app.post('/objects/{object_id}/analysis_photos/')
+async def upload_analysis_photo(object_id: int, photo: UploadFile = File(...)):
+    """Save an analysis photo to uploads and return its public URL."""
+    try:
+        orig = os.path.basename(photo.filename)
+        safe = re.sub(r'[^A-Za-z0-9_.-]', '_', orig)
+        fname = f"analysis_{object_id}_{int(time.time())}_{safe}"
+        dest = os.path.join(UPLOAD_DIR, fname)
+        with open(dest, 'wb') as f:
+            shutil.copyfileobj(photo.file, f)
+        url = f"/uploads/{fname}"
+        return {"url": url}
+    except Exception as e:
+        print(f"Error saving analysis photo: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post('/export/analysis/pdf')
+async def export_analysis_pdf(request: Request):
+    """Accept an HTML payload (text/html in body or JSON {html: ...}) and attempt to produce a PDF using wkhtmltopdf.
+    If wkhtmltopdf is not available, return the HTML as-is with a 501 message explaining server-side PDF is unavailable.
+    """
+    try:
+        content_type = request.headers.get('content-type', '')
+        if 'application/json' in content_type:
+            payload = await request.json()
+            html = payload.get('html', '')
+        else:
+            html = await request.body()
+            html = html.decode('utf-8')
+
+        wk = shutil.which('wkhtmltopdf')
+        if not wk:
+            # Not installed; return HTML with informative header
+            return HTMLResponse(content=html, status_code=501)
+
+        # Create temp files
+        with tempfile.NamedTemporaryFile(prefix='report_', suffix='.html', delete=False, mode='w', encoding='utf-8') as tf:
+            tf.write(html)
+            html_path = tf.name
+        pdf_fd, pdf_path = tempfile.mkstemp(suffix='.pdf')
+        os.close(pdf_fd)
+
+        cmd = [wk, html_path, pdf_path]
+        subprocess.check_call(cmd)
+
+        return FileResponse(pdf_path, media_type='application/pdf', filename='analysis_report.pdf')
+    except subprocess.CalledProcessError as e:
+        print(f"wkhtmltopdf failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        print(f"Error in export_analysis_pdf: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/objects/{object_id}/incomes/{income_id}")
 async def update_income(object_id: int, income_id: int, date: str = Form(...), amount: float = Form(...), sender: str = Form(...), receiver: str = Form(...), comment: str = Form(""), photo: UploadFile = File(None)):

@@ -567,6 +567,17 @@ document.addEventListener('DOMContentLoaded', () => {
             downloadIncome();
         };
     }
+    // Кнопка "Скачать" для анализа — вызывает уже существующий экспортный метод
+    const downloadAnalysisBtn = document.getElementById('download-analysis');
+    if (downloadAnalysisBtn) {
+        downloadAnalysisBtn.onclick = () => {
+            if (window.exportAnalysisReport) {
+                window.exportAnalysisReport();
+            } else {
+                alert('Экспорт анализа недоступен');
+            }
+        };
+    }
 });
 
 // При старте скрываем вкладки и кнопки
