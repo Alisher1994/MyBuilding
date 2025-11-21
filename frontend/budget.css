@@ -219,7 +219,7 @@
     margin: 8px 24px 4px 48px;
     padding: 8px 12px;
     display: grid;
-    grid-template-columns: 40px 60px 50px 350px 35px 100px 100px 120px 200px 40px;
+    grid-template-columns: 40px 60px 50px minmax(300px, 1fr) 35px 100px 100px 120px 200px 40px;
     gap: 8px;
     align-items: center;
     font-size: 11px;
@@ -236,7 +236,7 @@
     margin: 2px 24px 2px 48px;
     padding: 8px 12px;
     display: grid;
-    grid-template-columns: 40px 60px 50px 350px 35px 100px 100px 120px 200px 40px;
+    grid-template-columns: 40px 60px 50px minmax(300px, 1fr) 35px 100px 100px 120px 200px 40px;
     gap: 8px;
     align-items: center;
     font-size: 13px;
@@ -354,6 +354,12 @@
     border-radius: 4px;
 }
 
+.res-name {
+    min-width: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
 .res-type {
     cursor: pointer;
     display: flex;
@@ -439,7 +445,7 @@
 
     .budget-resource-header,
     .budget-resource {
-        grid-template-columns: 40px 60px 50px 300px 40px 80px 80px 100px 150px 40px;
+        grid-template-columns: 40px 60px 50px minmax(250px, 1fr) 40px 80px 80px 100px 150px 40px;
         font-size: 12px;
     }
 }
