@@ -27,8 +27,6 @@
         /* Price Plan */
         120px
         /* Sum Plan */
-        100px
-        /* Qty Fact (Total) */
         120px
         /* Sum Fact (Total) */
         1fr;
@@ -88,7 +86,6 @@
     background: #fafafa;
     border-bottom: 1px solid #eee;
     padding: 10px 20px 20px 60px;
-    /* Indent to align with content */
     display: none;
     box-shadow: inset 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 }
@@ -141,24 +138,40 @@
     outline: none;
 }
 
-/* Add Button in table */
-.btn-add-row {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
+/* Save Button in table */
+.btn-save-row {
+    padding: 6px 12px;
     background: #4CAF50;
     color: white;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 18px;
+    gap: 5px;
+}
+
+.btn-save-row:hover {
+    background: #43a047;
+}
+
+/* Delete Button */
+.btn-delete-row {
+    color: #d32f2f;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
     transition: background 0.2s;
 }
 
-.btn-add-row:hover {
-    background: #43a047;
+.btn-delete-row:hover {
+    background: #ffebee;
 }
 
 /* Receipt Thumbnails */

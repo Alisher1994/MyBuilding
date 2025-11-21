@@ -1,7 +1,7 @@
 # === Expense API Endpoints ===
 from fastapi import Request, HTTPException
 import time
-from datetime import date as dtdate
+from datetime import date as dtdate, datetime
 import os
 
 # Get budget tree with expense data
@@ -60,14 +60,23 @@ async def add_expense(resource_id: int, request: Request):
     """Добавить расход для ресурса"""
     try:
         data = await request.json()
-        print(f"Adding expense for resource {resource_id}: {data}") # Debug log
+        print(f"Adding expense for resource {resource_id}: {data}")
         
-        # Default to current date if not provided
+        # Robust Date Handling
         date_str = data.get("date")
-        if not date_str:
-            date_val = dtdate.today()
-        else:
-            date_val = date_str
+        date_val = dtdate.today()
+        
+        if date_str:
+            try:
+                # Try ISO format YYYY-MM-DD
+                date_val = dtdate.fromisoformat(date_str)
+            except ValueError:
+                try:
+                    # Try DD.MM.YYYY (common in some locales)
+                    date_val = datetime.strptime(date_str, "%d.%m.%Y").date()
+                except ValueError:
+                    print(f"Date parse failed for '{date_str}', using today")
+                    date_val = dtdate.today()
             
         # Handle potential None/Null values safely
         qty_raw = data.get("actual_quantity")
@@ -88,7 +97,8 @@ async def add_expense(resource_id: int, request: Request):
         return dict(row)
     except Exception as e:
         print(f"Error adding expense: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # Return a 400 error with the message so the frontend can show it
+        raise HTTPException(status_code=400, detail=f"Server Error: {str(e)}")
 
 # Update expense
 @app.put("/expenses/{expense_id}")
@@ -103,8 +113,18 @@ async def update_expense(expense_id: int, request: Request):
         
         if "date" in data:
             updates.append(f"date=${param_count}")
-            params.append(data["date"])
+            # Try to parse date if provided
+            d_val = data["date"]
+            try:
+                d_obj = dtdate.fromisoformat(d_val)
+            except:
+                try:
+                    d_obj = datetime.strptime(d_val, "%d.%m.%Y").date()
+                except:
+                    d_obj = dtdate.today()
+            params.append(d_obj)
             param_count += 1
+            
         if "actual_quantity" in data:
             updates.append(f"actual_quantity=${param_count}")
             val = data["actual_quantity"]

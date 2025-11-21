@@ -137,7 +137,6 @@ function createExpenseWorkTypeElement(workType, wtNum) {
         <span>Кол-во (план)</span>
         <span>Цена (план)</span>
         <span>Сумма (план)</span>
-        <span>Кол-во (факт)</span>
         <span>Сумма (факт)</span>
         <span></span>
     `;
@@ -175,7 +174,6 @@ function createExpenseResourceElement(resource, wtNum, resNum) {
 
     // Calculate totals from expenses
     const expenses = resource.expenses || [];
-    const totalActualQty = expenses.reduce((sum, e) => sum + (e.actual_quantity || 0), 0);
     const totalActualSum = expenses.reduce((sum, e) => sum + ((e.actual_quantity || 0) * (e.actual_price || 0)), 0);
 
     const isOverBudget = totalActualSum > budgetSum && totalActualSum > 0;
@@ -192,7 +190,6 @@ function createExpenseResourceElement(resource, wtNum, resNum) {
         <span class="res-quantity">${fmt(resource.quantity)}</span>
         <span class="res-price">${fmt(resource.price)}</span>
         <span class="res-sum">${fmt(budgetSum)}</span>
-        <span class="res-actual-qty">${totalActualQty > 0 ? fmt(totalActualQty) : '—'}</span>
         <span class="res-actual-sum ${isOverBudget ? 'over-budget' : ''}">${totalActualSum > 0 ? fmt(totalActualSum) : '—'}</span>
         <span></span>
     `;
@@ -255,7 +252,7 @@ function renderResourceDetails(resource, expenses) {
                         </td>
                         <td>${exp.comment || ''}</td>
                         <td>
-                            <button onclick="deleteExpense(${exp.id})" style="color:red;border:none;background:none;cursor:pointer;" title="Удалить">✖</button>
+                            <button class="btn-delete-row" onclick="deleteExpense(${exp.id})" title="Удалить">✖</button>
                         </td>
                     </tr>
                 `).join('')}
@@ -275,7 +272,7 @@ function renderResourceDetails(resource, expenses) {
                         <input type="file" class="exp-file-3" style="display:none;" accept="image/*">
                     </td>
                     <td><input type="text" class="table-input exp-comment" placeholder="Комментарий"></td>
-                    <td><button class="btn-add-row" title="Добавить">+</button></td>
+                    <td><button class="btn-save-row" title="Сохранить">Сохранить</button></td>
                 </tr>
             </tbody>
         </table>
@@ -291,7 +288,7 @@ function setupAddFormListeners(container, resourceId) {
     const qtyInput = container.querySelector('.exp-qty');
     const priceInput = container.querySelector('.exp-price');
     const sumDisplay = container.querySelector('.exp-sum-display');
-    const addBtn = container.querySelector('.btn-add-row');
+    const saveBtn = container.querySelector('.btn-save-row');
 
     // Auto-calc sum
     const updateSum = () => {
@@ -328,8 +325,8 @@ function setupAddFormListeners(container, resourceId) {
         });
     });
 
-    // Add Button
-    addBtn.addEventListener('click', async () => {
+    // Save Button
+    saveBtn.addEventListener('click', async () => {
         await saveNewExpense(resourceId, container);
     });
 }
@@ -360,7 +357,10 @@ async function saveNewExpense(resourceId, container) {
             body: JSON.stringify(data)
         });
 
-        if (!res.ok) throw new Error('Failed to save expense');
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || 'Failed to save expense');
+        }
         const expense = await res.json();
 
         // 2. Upload photos
