@@ -236,6 +236,11 @@ function setActiveTab(tab) {
     if (tab === 'expense' && selectedId && window.loadExpenses) {
         window.loadExpenses(selectedId);
     }
+
+    // Если выбрана вкладка "анализ" — обновить данные
+    if (tab === 'analysis' && selectedId && window.loadAnalysis) {
+        window.loadAnalysis(selectedId);
+    }
 }
 
 // Вкладки переключение (инициализация сразу после определения)
