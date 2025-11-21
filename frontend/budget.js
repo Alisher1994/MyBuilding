@@ -788,7 +788,6 @@ function downloadBudget() {
             if (wt.resources.length > 0) {
                 tableHTML += `
                     <tr class="resource-header-row">
-                        <td></td>
                         <td>№</td>
                         <td>Фото</td>
                         <td>Тип</td>
@@ -810,7 +809,6 @@ function downloadBudget() {
 
                     tableHTML += `
                         <tr class="resource-row">
-                            <td></td>
                             <td>${workTypeCounter}.${resIdx + 1}</td>
                             <td>${photoHtml}</td>
                             <td><span class="type-badge" style="background-color: ${resType.color}">${res.resource_type}</span></td>
