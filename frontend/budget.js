@@ -764,7 +764,7 @@ function downloadBudget() {
 
         tableHTML += `
             <tr class="stage-row">
-                <td colspan="9"><strong>${stage.name}</strong></td>
+                <td colspan="8"><strong>${stage.name}</strong></td>
                 <td class="text-right"><strong>${formatNum(stageSum)} сум</strong></td>
             </tr>
         `;
@@ -786,20 +786,6 @@ function downloadBudget() {
             `;
 
             if (wt.resources.length > 0) {
-                tableHTML += `
-                    <tr class="resource-header-row">
-                        <td>№</td>
-                        <td>Фото</td>
-                        <td>Тип</td>
-                        <td>Название</td>
-                        <td>Ед.изм</td>
-                        <td>Кол-во</td>
-                        <td>Цена</td>
-                        <td>Сумма</td>
-                        <td>Поставщик</td>
-                    </tr>
-                `;
-
                 wt.resources.forEach((res, resIdx) => {
                     const resSum = res.quantity * res.price;
                     const resType = RESOURCE_TYPES[res.resource_type] || RESOURCE_TYPES['Материал'];
