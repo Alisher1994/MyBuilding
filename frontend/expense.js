@@ -69,7 +69,9 @@ function createExpenseStageElement(stage, stageNum) {
     header.className = 'budget-stage-header';
     header.innerHTML = `
         <div style="display:flex;align-items:center;gap:10px;">
-            <span class="collapse-icon">▼</span>
+            <span class="collapse-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+            </span>
             <strong>${stage.name}</strong>
         </div>
         <div style="display:flex;gap:20px;">
@@ -88,12 +90,13 @@ function createExpenseStageElement(stage, stageNum) {
         });
     }
 
-    header.querySelector('.collapse-icon').addEventListener('click', (e) => {
+    const collapseIcon = header.querySelector('.collapse-icon');
+    collapseIcon.addEventListener('click', (e) => {
         e.stopPropagation();
         const isCollapsed = workTypesContainer.style.display === 'none';
         workTypesContainer.style.display = isCollapsed ? '' : 'none';
-        e.target.innerHTML = isCollapsed ?
-            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-right-icon lucide-arrow-down-right"><path d="m7 7 10 10"/><path d="M17 7v10H7"/></svg>' :
+        collapseIcon.innerHTML = isCollapsed ?
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>' :
             '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-icon lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
     });
 
@@ -116,7 +119,9 @@ function createExpenseWorkTypeElement(workType, wtNum) {
     header.style.alignItems = 'center';
     header.innerHTML = `
         <div style="display:flex;align-items:center;gap:10px;">
-            <span class="collapse-icon">▼</span>
+            <span class="collapse-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
+            </span>
             <span>${workType.name} (${workType.unit})</span>
         </div>
         <div style="display:flex;gap:20px;">
@@ -152,12 +157,13 @@ function createExpenseWorkTypeElement(workType, wtNum) {
         });
     }
 
-    header.querySelector('.collapse-icon').addEventListener('click', (e) => {
+    const collapseIcon = header.querySelector('.collapse-icon');
+    collapseIcon.addEventListener('click', (e) => {
         e.stopPropagation();
         const isCollapsed = resourcesContainer.style.display === 'none';
         resourcesContainer.style.display = isCollapsed ? '' : 'none';
-        e.target.innerHTML = isCollapsed ?
-            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-right-icon lucide-arrow-down-right"><path d="m7 7 10 10"/><path d="M17 7v10H7"/></svg>' :
+        collapseIcon.innerHTML = isCollapsed ?
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-icon lucide-arrow-down"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>' :
             '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right-icon lucide-arrow-right"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
     });
 
