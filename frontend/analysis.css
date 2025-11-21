@@ -42,16 +42,16 @@
 }
 
 .photo-slot {
-    width: calc((100% - 36px) / 4);
-    max-width: 180px;
+    flex: 1 1 0%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
 }
 
 .photo-preview {
     width: 100%;
-    padding-top: 75%;
+    height: 140px; /* rectangular preview height */
     position: relative;
     background: #fafafa;
     border: 1px dashed #ddd;
@@ -65,7 +65,7 @@
 .photo-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; cursor: pointer }
 .photo-placeholder { font-size: 28px; color: #999 }
 
-.photo-controls { margin-top: 8px; display:flex; gap:6px }
+.photo-controls { margin-top: 8px; display:flex; gap:6px; justify-content:center }
 
 .object-param-row { display:flex; gap:12px; align-items:center; margin-bottom:8px }
 .object-param-row label { display:flex; flex-direction:column; font-size:13px; color:#444 }

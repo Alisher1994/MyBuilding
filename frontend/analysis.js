@@ -161,9 +161,6 @@ function renderAnalysis() {
                         <div class="price-label">Цена / м² (факт)</div>
                         <div class="price-value" id="price-fact">0</div>
                     </div>
-                    <div class="export-btn-wrap">
-                        <button id="export-analysis-btn" class="btn" onclick="exportAnalysisReport()">Скачать</button>
-                    </div>
                 </div>
             </div>
         </div>
