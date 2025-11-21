@@ -1,10 +1,8 @@
 // ===== EXPENSE TAB LOGIC =====
-// Точная копия структуры Budget с добавлением полей для фактических данных
 
 let expenseData = [];
 let selectedExpenseObjectId = null;
 
-// Типы ресурсов (копия из budget.js)
 const EXP_RESOURCE_TYPES = {
     'Трудоресурсы': { color: '#9C27B0', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>' },
     'Материал': { color: '#8BC34A', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>' },
@@ -17,14 +15,13 @@ const EXP_RESOURCE_TYPES = {
     'Расходные материалы': { color: '#FFEB3B', icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>' }
 };
 
-// Загрузка данных расходов (бюджет + фактические данные)
 async function loadExpenses(objectId) {
     if (!objectId) return;
     selectedExpenseObjectId = objectId;
 
     try {
         const res = await fetch(`/objects/${objectId}/expenses/tree`);
-        if (!res.ok) throw new Error('Failed to load');
+        if (!res.ok) throw new Error('Failed');
         expenseData = await res.json();
         renderExpenseTree();
     } catch (err) {
@@ -33,7 +30,6 @@ async function loadExpenses(objectId) {
     }
 }
 
-// Отрисовка дерева расходов
 function renderExpenseTree() {
     const container = document.getElementById('expense-container');
     if (!container) return;
@@ -50,19 +46,17 @@ function renderExpenseTree() {
         container.appendChild(stageEl);
     });
 
-    // Добавить итоговую строку
     const totalBudget = expenseData.reduce((sum, s) => sum + calcStageBudget(s), 0);
     const totalActual = expenseData.reduce((sum, s) => sum + calcStageActual(s), 0);
     const totalRow = document.createElement('div');
     totalRow.className = 'budget-total-row';
     totalRow.innerHTML = `
         <span>ИТОГО:</span>
-        <span>Бюджет: ${fmtNum(totalBudget)} | Факт: <span class="${totalActual > totalBudget ? 'over-budget' : ''}">${fmtNum(totalActual)}</span></span>
+        <span>Бюджет: ${fmt(totalBudget)} | Факт: <span class="${totalActual > totalBudget ? 'over-budget' : ''}">${fmt(totalActual)}</span></span>
     `;
     container.appendChild(totalRow);
 }
 
-// Создание элемента этапа
 function createExpenseStageElement(stage, stageNum) {
     const div = document.createElement('div');
     div.className = 'budget-stage';
@@ -78,8 +72,8 @@ function createExpenseStageElement(stage, stageNum) {
             <strong>${stage.name}</strong>
         </div>
         <div style="display:flex;gap:20px;">
-            <span>Бюджет: ${fmtNum(stageBudget)}</span>
-            <span class="${stageActual > stageBudget ? 'over-budget' : ''}">Факт: ${fmtNum(stageActual)}</span>
+            <span>Бюджет: ${fmt(stageBudget)}</span>
+            <span class="${stageActual > stageBudget ? 'over-budget' : ''}">Факт: ${fmt(stageActual)}</span>
         </div>
     `;
 
@@ -88,12 +82,11 @@ function createExpenseStageElement(stage, stageNum) {
 
     if (stage.work_types && stage.work_types.length > 0) {
         stage.work_types.forEach((wt, wtIdx) => {
-            const wtEl = createExpenseWorkTypeElement(wt, stageNum, wtIdx + 1);
+            const wtEl = createExpenseWorkTypeElement(wt, wtIdx + 1);
             workTypesContainer.appendChild(wtEl);
         });
     }
 
-    // Collapse
     header.querySelector('.collapse-icon').addEventListener('click', (e) => {
         e.stopPropagation();
         const isCollapsed = workTypesContainer.style.display === 'none';
@@ -106,8 +99,7 @@ function createExpenseStageElement(stage, stageNum) {
     return div;
 }
 
-// Создание элемента вида работ
-function createExpenseWorkTypeElement(workType, stageNum, wtNum) {
+function createExpenseWorkTypeElement(workType, wtNum) {
     const div = document.createElement('div');
     div.className = 'budget-work-type';
 
@@ -116,21 +108,23 @@ function createExpenseWorkTypeElement(workType, stageNum, wtNum) {
 
     const header = document.createElement('div');
     header.className = 'budget-work-type-header';
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
     header.innerHTML = `
         <div style="display:flex;align-items:center;gap:10px;">
             <span class="collapse-icon">▼</span>
             <span>${workType.name} (${workType.unit})</span>
         </div>
         <div style="display:flex;gap:20px;">
-            <span>Бюджет: ${fmtNum(wtBudget)}</span>
-            <span class="${wtActual > wtBudget ? 'over-budget' : ''}">Факт: ${fmtNum(wtActual)}</span>
+            <span>Бюджет: ${fmt(wtBudget)}</span>
+            <span class="${wtActual > wtBudget ? 'over-budget' : ''}">Факт: ${fmt(wtActual)}</span>
         </div>
     `;
 
     const resourcesContainer = document.createElement('div');
     resourcesContainer.className = 'budget-resources-container';
 
-    // Добавить заголовок таблицы ресурсов
     const resHeader = document.createElement('div');
     resHeader.className = 'budget-resource-header';
     resHeader.innerHTML = `
@@ -152,12 +146,11 @@ function createExpenseWorkTypeElement(workType, stageNum, wtNum) {
 
     if (workType.resources && workType.resources.length > 0) {
         workType.resources.forEach((res, resIdx) => {
-            const resEl = createExpenseResourceElement(res, stageNum, wtNum, resIdx + 1);
+            const resEl = createExpenseResourceElement(res, wtNum, resIdx + 1);
             resourcesContainer.appendChild(resEl);
         });
     }
 
-    // Collapse
     header.querySelector('.collapse-icon').addEventListener('click', (e) => {
         e.stopPropagation();
         const isCollapsed = resourcesContainer.style.display === 'none';
@@ -170,8 +163,7 @@ function createExpenseWorkTypeElement(workType, stageNum, wtNum) {
     return div;
 }
 
-// Создание элемента ресурса с полями для фактических данных
-function createExpenseResourceElement(resource, stageNum, wtNum, resNum) {
+function createExpenseResourceElement(resource, wtNum, resNum) {
     const div = document.createElement('div');
     div.className = 'budget-resource';
     div.dataset.resourceId = resource.id;
@@ -180,103 +172,155 @@ function createExpenseResourceElement(resource, stageNum, wtNum, resNum) {
     const resType = EXP_RESOURCE_TYPES[resource.resource_type] || EXP_RESOURCE_TYPES['Материал'];
     const resIcon = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${resource.resource_type}">${resType.icon}</div>`;
 
-    // Получить фактические данные (если есть)
     const expense = resource.expenses && resource.expenses.length > 0 ? resource.expenses[0] : null;
     const actualQty = expense ? expense.actual_quantity : '';
     const actualPrice = expense ? expense.actual_price : '';
     const actualSum = expense ? (expense.actual_quantity * expense.actual_price) : 0;
-    const comment = expense ? expense.comment : '';
+    const comment = expense ? (expense.comment || '') : '';
 
     const isOverBudget = actualSum > budgetSum && actualSum > 0;
 
     div.innerHTML = `
-        <span class="res-num">${stageNum}.${wtNum}.${resNum}</span>
+        <span class="res-num">${wtNum}.${resNum}</span>
         <span class="res-photo">
-            ${resource.photo ?
-            `<img src="${resource.photo}" alt="Фото" class="res-photo-thumb" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` :
-            `<span style="color:#ccc;">—</span>`
-        }
+            ${resource.photo ? `<img src="${resource.photo}" alt="Фото" class="res-photo-thumb">` : '<span style="color:#ccc;">—</span>'}
         </span>
         <span class="res-type">${resIcon}</span>
         <span class="res-name">${resource.name}</span>
         <span class="res-unit">${resource.unit}</span>
-        <span class="res-quantity">${fmtNum(resource.quantity)}</span>
-        <span class="res-price">${fmtNum(resource.price)}</span>
-        <span class="res-sum">${fmtNum(budgetSum)}</span>
+        <span class="res-quantity">${fmt(resource.quantity)}</span>
+        <span class="res-price">${fmt(resource.price)}</span>
+        <span class="res-sum">${fmt(budgetSum)}</span>
         <span class="res-actual-qty">
-            <input type="number" step="0.001" value="${actualQty}" 
-                   data-res-id="${resource.id}" data-field="actual_quantity" 
-                   class="expense-input" placeholder="0" style="width:80px;">
+            <input type="number" step="0.001" value="${actualQty}" data-res-id="${resource.id}" data-field="actual_quantity" class="expense-input" placeholder="0">
         </span>
         <span class="res-actual-price">
-            <input type="number" step="0.01" value="${actualPrice}" 
-                   data-res-id="${resource.id}" data-field="actual_price" 
-                   class="expense-input" placeholder="0" style="width:100px;">
+            <input type="number" step="0.01" value="${actualPrice}" data-res-id="${resource.id}" data-field="actual_price" class="expense-input" placeholder="0">
         </span>
-        <span class="res-actual-sum ${isOverBudget ? 'over-budget' : ''}">${actualSum > 0 ? fmtNum(actualSum) : '—'}</span>
+        <span class="res-actual-sum ${isOverBudget ? 'over-budget' : ''}">${actualSum > 0 ? fmt(actualSum) : '—'}</span>
         <span class="res-receipts">
-            <button class="btn-upload-receipt" data-res-id="${resource.id}" title="Загрузить чеки">📷</button>
-            ${expense && (expense.receipt_photo_1 || expense.receipt_photo_2 || expense.receipt_photo_3) ?
-            `<span style="color:#4CAF50;">✓</span>` : ''}
+            <input type="file" accept="image/*" data-res-id="${resource.id}" data-receipt="1" class="receipt-input" style="display:none;">
+            <input type="file" accept="image/*" data-res-id="${resource.id}" data-receipt="2" class="receipt-input" style="display:none;">
+            <input type="file" accept="image/*" data-res-id="${resource.id}" data-receipt="3" class="receipt-input" style="display:none;">
+            <div class="receipt-boxes">
+                <div class="receipt-box" data-receipt="1" data-res-id="${resource.id}">
+                    ${expense && expense.receipt_photo_1 ? `<img src="${expense.receipt_photo_1}" alt="Чек 1">` : '📷'}
+                </div>
+                <div class="receipt-box" data-receipt="2" data-res-id="${resource.id}">
+                    ${expense && expense.receipt_photo_2 ? `<img src="${expense.receipt_photo_2}" alt="Чек 2">` : '📷'}
+                </div>
+                <div class="receipt-box" data-receipt="3" data-res-id="${resource.id}">
+                    ${expense && expense.receipt_photo_3 ? `<img src="${expense.receipt_photo_3}" alt="Чек 3">` : '📷'}
+                </div>
+            </div>
         </span>
         <span class="res-comment">
-            <input type="text" value="${comment}" 
-                   data-res-id="${resource.id}" data-field="comment" 
-                   class="expense-input" placeholder="Комментарий" style="width:150px;">
+            <input type="text" value="${comment}" data-res-id="${resource.id}" data-field="comment" class="expense-input" placeholder="Комментарий">
         </span>
     `;
 
-    // Обработчики для сохранения данных
     div.querySelectorAll('.expense-input').forEach(input => {
+        input.addEventListener('blur', async () => {
+            await saveExpenseData(resource.id);
+        });
+    });
+
+    div.querySelectorAll('.receipt-box').forEach(box => {
+        box.addEventListener('click', () => {
+            const receiptNum = box.dataset.receipt;
+            const resId = box.dataset.resId;
+            const fileInput = div.querySelector(`input[data-res-id="${resId}"][data-receipt="${receiptNum}"]`);
+            fileInput.click();
+        });
+    });
+
+    div.querySelectorAll('.receipt-input').forEach(input => {
         input.addEventListener('change', async (e) => {
-            await saveExpenseData(resource.id, e.target.dataset.field, e.target.value);
+            if (e.target.files && e.target.files[0]) {
+                await uploadReceipt(resource.id, e.target.dataset.receipt, e.target.files[0]);
+            }
         });
     });
 
     return div;
 }
 
-// Сохранение фактических данных
-async function saveExpenseData(resourceId, field, value) {
+async function saveExpenseData(resourceId) {
     try {
-        // Получить текущие данные ресурса
         const resource = findResourceById(resourceId);
         if (!resource) return;
+
+        const qtyInput = document.querySelector(`input[data-res-id="${resourceId}"][data-field="actual_quantity"]`);
+        const priceInput = document.querySelector(`input[data-res-id="${resourceId}"][data-field="actual_price"]`);
+        const commentInput = document.querySelector(`input[data-res-id="${resourceId}"][data-field="comment"]`);
+
+        const qty = parseFloat(qtyInput.value);
+        const price = parseFloat(priceInput.value);
+        const comment = commentInput.value;
+
+        if (!qty && !price) return;
 
         const expense = resource.expenses && resource.expenses.length > 0 ? resource.expenses[0] : null;
 
         const data = {
             date: new Date().toISOString().split('T')[0],
-            actual_quantity: parseFloat(document.querySelector(`input[data-res-id="${resourceId}"][data-field="actual_quantity"]`).value) || 0,
-            actual_price: parseFloat(document.querySelector(`input[data-res-id="${resourceId}"][data-field="actual_price"]`).value) || 0,
-            comment: document.querySelector(`input[data-res-id="${resourceId}"][data-field="comment"]`).value || ''
+            actual_quantity: qty || 0,
+            actual_price: price || 0,
+            comment: comment || ''
         };
 
+        let response;
         if (expense) {
-            // Обновить существующий
-            await fetch(`/expenses/${expense.id}`, {
+            response = await fetch(`/expenses/${expense.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
         } else {
-            // Создать новый
-            await fetch(`/budget/resources/${resourceId}/expenses/`, {
+            response = await fetch(`/budget/resources/${resourceId}/expenses/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
         }
 
-        // Перезагрузить данные
+        if (!response.ok) throw new Error('Save failed');
+
         await loadExpenses(selectedExpenseObjectId);
     } catch (err) {
         console.error('Save error:', err);
-        alert('Ошибка сохранения');
+        alert('Ошибка сохранения: ' + err.message);
     }
 }
 
-// Вспомогательные функции
+async function uploadReceipt(resourceId, receiptNum, file) {
+    try {
+        const resource = findResourceById(resourceId);
+        if (!resource) return;
+
+        const expense = resource.expenses && resource.expenses.length > 0 ? resource.expenses[0] : null;
+        if (!expense) {
+            alert('Сначала введите количество и цену');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append(`receipt_${receiptNum}`, file);
+
+        const response = await fetch(`/expenses/${expense.id}/receipt/${receiptNum}`, {
+            method: 'PUT',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error('Upload failed');
+
+        await loadExpenses(selectedExpenseObjectId);
+    } catch (err) {
+        console.error('Upload error:', err);
+        alert('Ошибка загрузки чека');
+    }
+}
+
 function calcStageBudget(stage) {
     if (!stage.work_types) return 0;
     return stage.work_types.reduce((sum, wt) => sum + calcWTBudget(wt), 0);
@@ -313,10 +357,9 @@ function findResourceById(id) {
     return null;
 }
 
-function fmtNum(num) {
+function fmt(num) {
     if (num === null || num === undefined) return '0';
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }
 
-// Экспорт
 window.loadExpenses = loadExpenses;
