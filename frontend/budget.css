@@ -152,7 +152,7 @@
 .budget-work-type-header {
     padding: 10px 12px;
     display: grid;
-    grid-template-columns: 40px 20px 1fr 80px 100px 100px 120px 60px 30px;
+    grid-template-columns: 40px 20px 1fr 50px 100px 100px 120px 60px 30px;
     gap: 8px;
     align-items: center;
     font-size: 14px;
@@ -219,7 +219,7 @@
     margin: 8px 24px 4px 48px;
     padding: 8px 12px;
     display: grid;
-    grid-template-columns: 40px 60px 50px 1fr 80px 100px 100px 120px 150px 30px;
+    grid-template-columns: 40px 60px 50px 1fr 50px 100px 100px 120px 150px 30px;
     gap: 8px;
     align-items: center;
     font-size: 11px;
@@ -236,7 +236,7 @@
     margin: 2px 24px 2px 48px;
     padding: 8px 12px;
     display: grid;
-    grid-template-columns: 40px 60px 50px 1fr 80px 100px 100px 120px 150px 30px;
+    grid-template-columns: 40px 60px 50px 1fr 50px 100px 100px 120px 150px 30px;
     gap: 8px;
     align-items: center;
     font-size: 13px;
@@ -457,6 +457,7 @@
         margin: 2px 16px;
     }
 }
+
 /* Over budget indicator */
 .over-budget {
     color: #d32f2f !important;
