@@ -128,6 +128,7 @@ function createExpenseWorkTypeElement(workType, wtNum) {
     const resHeader = document.createElement('div');
     resHeader.className = 'budget-resource-header';
     resHeader.innerHTML = `
+        <span></span>
         <span>№</span>
         <span>Фото</span>
         <span>Тип</span>
@@ -137,10 +138,8 @@ function createExpenseWorkTypeElement(workType, wtNum) {
         <span>Цена (план)</span>
         <span>Сумма (план)</span>
         <span>Кол-во (факт)</span>
-        <span>Цена (факт)</span>
         <span>Сумма (факт)</span>
-        <span>Чеки</span>
-        <span>Комментарий</span>
+        <span></span>
     `;
     resourcesContainer.appendChild(resHeader);
 
@@ -164,6 +163,8 @@ function createExpenseWorkTypeElement(workType, wtNum) {
 }
 
 function createExpenseResourceElement(resource, wtNum, resNum) {
+    const container = document.createElement('div');
+
     const div = document.createElement('div');
     div.className = 'budget-resource';
     div.dataset.resourceId = resource.id;
@@ -172,15 +173,15 @@ function createExpenseResourceElement(resource, wtNum, resNum) {
     const resType = EXP_RESOURCE_TYPES[resource.resource_type] || EXP_RESOURCE_TYPES['Материал'];
     const resIcon = `<div class="res-type-icon" style="background-color: ${resType.color}" title="${resource.resource_type}">${resType.icon}</div>`;
 
-    const expense = resource.expenses && resource.expenses.length > 0 ? resource.expenses[0] : null;
-    const actualQty = expense ? expense.actual_quantity : '';
-    const actualPrice = expense ? expense.actual_price : '';
-    const actualSum = expense ? (expense.actual_quantity * expense.actual_price) : 0;
-    const comment = expense ? (expense.comment || '') : '';
+    // Calculate totals from expenses
+    const expenses = resource.expenses || [];
+    const totalActualQty = expenses.reduce((sum, e) => sum + (e.actual_quantity || 0), 0);
+    const totalActualSum = expenses.reduce((sum, e) => sum + ((e.actual_quantity || 0) * (e.actual_price || 0)), 0);
 
-    const isOverBudget = actualSum > budgetSum && actualSum > 0;
+    const isOverBudget = totalActualSum > budgetSum && totalActualSum > 0;
 
     div.innerHTML = `
+        <button class="expand-btn" title="Раскрыть детали">▶</button>
         <span class="res-num">${wtNum}.${resNum}</span>
         <span class="res-photo">
             ${resource.photo ? `<img src="${resource.photo}" alt="Фото" class="res-photo-thumb">` : '<span style="color:#ccc;">—</span>'}
@@ -191,133 +192,169 @@ function createExpenseResourceElement(resource, wtNum, resNum) {
         <span class="res-quantity">${fmt(resource.quantity)}</span>
         <span class="res-price">${fmt(resource.price)}</span>
         <span class="res-sum">${fmt(budgetSum)}</span>
-        <span class="res-actual-qty">
-            <input type="number" step="0.001" value="${actualQty}" data-res-id="${resource.id}" data-field="actual_quantity" class="expense-input" placeholder="0">
-        </span>
-        <span class="res-actual-price">
-            <input type="number" step="0.01" value="${actualPrice}" data-res-id="${resource.id}" data-field="actual_price" class="expense-input" placeholder="0">
-        </span>
-        <span class="res-actual-sum ${isOverBudget ? 'over-budget' : ''}">${actualSum > 0 ? fmt(actualSum) : '—'}</span>
-        <span class="res-receipts">
-            <input type="file" accept="image/*" data-res-id="${resource.id}" data-receipt="1" class="receipt-input" style="display:none;">
-            <input type="file" accept="image/*" data-res-id="${resource.id}" data-receipt="2" class="receipt-input" style="display:none;">
-            <input type="file" accept="image/*" data-res-id="${resource.id}" data-receipt="3" class="receipt-input" style="display:none;">
-            <div class="receipt-boxes">
-                <div class="receipt-box" data-receipt="1" data-res-id="${resource.id}">
-                    ${expense && expense.receipt_photo_1 ? `<img src="${expense.receipt_photo_1}" alt="Чек 1">` : '📷'}
-                </div>
-                <div class="receipt-box" data-receipt="2" data-res-id="${resource.id}">
-                    ${expense && expense.receipt_photo_2 ? `<img src="${expense.receipt_photo_2}" alt="Чек 2">` : '📷'}
-                </div>
-                <div class="receipt-box" data-receipt="3" data-res-id="${resource.id}">
-                    ${expense && expense.receipt_photo_3 ? `<img src="${expense.receipt_photo_3}" alt="Чек 3">` : '📷'}
-                </div>
-            </div>
-        </span>
-        <span class="res-comment">
-            <input type="text" value="${comment}" data-res-id="${resource.id}" data-field="comment" class="expense-input" placeholder="Комментарий">
-        </span>
+        <span class="res-actual-qty">${totalActualQty > 0 ? fmt(totalActualQty) : '—'}</span>
+        <span class="res-actual-sum ${isOverBudget ? 'over-budget' : ''}">${totalActualSum > 0 ? fmt(totalActualSum) : '—'}</span>
+        <span></span>
     `;
 
-    div.querySelectorAll('.expense-input').forEach(input => {
-        input.addEventListener('blur', async () => {
-            await saveExpenseData(resource.id);
-        });
+    // Details Row
+    const detailsRow = document.createElement('div');
+    detailsRow.className = 'details-row';
+    detailsRow.innerHTML = renderResourceDetails(resource, expenses);
+
+    // Expand Logic
+    const expandBtn = div.querySelector('.expand-btn');
+    div.addEventListener('click', () => {
+        const isExpanded = detailsRow.classList.contains('active');
+        if (isExpanded) {
+            detailsRow.classList.remove('active');
+            expandBtn.classList.remove('expanded');
+            expandBtn.textContent = '▶';
+        } else {
+            detailsRow.classList.add('active');
+            expandBtn.classList.add('expanded');
+            expandBtn.textContent = '▼';
+        }
     });
 
-    div.querySelectorAll('.receipt-box').forEach(box => {
-        box.addEventListener('click', () => {
-            const receiptNum = box.dataset.receipt;
-            const resId = box.dataset.resId;
-            const fileInput = div.querySelector(`input[data-res-id="${resId}"][data-receipt="${receiptNum}"]`);
-            fileInput.click();
+    // Attach event listeners for the Add Form
+    const addBtn = detailsRow.querySelector('.btn-save-expense');
+    if (addBtn) {
+        addBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await saveNewExpense(resource.id, detailsRow);
         });
-    });
+    }
 
-    div.querySelectorAll('.receipt-input').forEach(input => {
-        input.addEventListener('change', async (e) => {
-            if (e.target.files && e.target.files[0]) {
-                await uploadReceipt(resource.id, e.target.dataset.receipt, e.target.files[0]);
-            }
-        });
-    });
-
-    return div;
+    container.appendChild(div);
+    container.appendChild(detailsRow);
+    return container;
 }
 
-async function saveExpenseData(resourceId) {
+function renderResourceDetails(resource, expenses) {
+    let historyHtml = '';
+    if (expenses.length > 0) {
+        historyHtml = `
+            <table class="expense-history-table">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Кол-во</th>
+                        <th>Цена</th>
+                        <th>Сумма</th>
+                        <th>Чеки</th>
+                        <th>Комментарий</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${expenses.map(exp => `
+                        <tr>
+                            <td>${exp.date || '—'}</td>
+                            <td>${fmt(exp.actual_quantity)}</td>
+                            <td>${fmt(exp.actual_price)}</td>
+                            <td>${fmt(exp.actual_quantity * exp.actual_price)}</td>
+                            <td class="history-receipts">
+                                ${exp.receipt_photo_1 ? `<a href="${exp.receipt_photo_1}" target="_blank"><img src="${exp.receipt_photo_1}" class="history-receipt-thumb"></a>` : ''}
+                                ${exp.receipt_photo_2 ? `<a href="${exp.receipt_photo_2}" target="_blank"><img src="${exp.receipt_photo_2}" class="history-receipt-thumb"></a>` : ''}
+                                ${exp.receipt_photo_3 ? `<a href="${exp.receipt_photo_3}" target="_blank"><img src="${exp.receipt_photo_3}" class="history-receipt-thumb"></a>` : ''}
+                            </td>
+                            <td>${exp.comment || ''}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    } else {
+        historyHtml = '<p style="color:#888;margin-bottom:15px;">Нет записей о расходах.</p>';
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const formHtml = `
+        <div class="add-expense-form">
+            <div class="form-group">
+                <label>Дата</label>
+                <input type="date" class="form-input exp-date" value="${today}">
+            </div>
+            <div class="form-group">
+                <label>Кол-во</label>
+                <input type="number" step="0.001" class="form-input exp-qty" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Цена</label>
+                <input type="number" step="0.01" class="form-input exp-price" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Комментарий</label>
+                <input type="text" class="form-input exp-comment" placeholder="Описание">
+            </div>
+            <div class="form-group">
+                <label>Чеки (до 3)</label>
+                <input type="file" class="form-input exp-file" multiple accept="image/*">
+            </div>
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn-save btn-save-expense">Добавить</button>
+            </div>
+        </div>
+    `;
+
+    return `
+        <h4 style="margin:0 0 10px 0;">История закупок: ${resource.name}</h4>
+        ${historyHtml}
+        <h4 style="margin:15px 0 10px 0;">Добавить расход</h4>
+        ${formHtml}
+    `;
+}
+
+async function saveNewExpense(resourceId, container) {
+    const dateVal = container.querySelector('.exp-date').value;
+    const qtyVal = container.querySelector('.exp-qty').value;
+    const priceVal = container.querySelector('.exp-price').value;
+    const commentVal = container.querySelector('.exp-comment').value;
+    const fileInput = container.querySelector('.exp-file');
+
+    if (!dateVal || !qtyVal || !priceVal) {
+        alert('Заполните дату, количество и цену');
+        return;
+    }
+
+    const data = {
+        date: dateVal,
+        actual_quantity: parseFloat(qtyVal),
+        actual_price: parseFloat(priceVal),
+        comment: commentVal
+    };
+
     try {
-        const resource = findResourceById(resourceId);
-        if (!resource) return;
+        // 1. Create expense
+        const res = await fetch(`/budget/resources/${resourceId}/expenses/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
 
-        const qtyInput = document.querySelector(`input[data-res-id="${resourceId}"][data-field="actual_quantity"]`);
-        const priceInput = document.querySelector(`input[data-res-id="${resourceId}"][data-field="actual_price"]`);
-        const commentInput = document.querySelector(`input[data-res-id="${resourceId}"][data-field="comment"]`);
+        if (!res.ok) throw new Error('Failed to save expense');
+        const expense = await res.json();
 
-        const qty = parseFloat(qtyInput.value);
-        const price = parseFloat(priceInput.value);
-        const comment = commentInput.value;
-
-        if (!qty && !price) return;
-
-        const expense = resource.expenses && resource.expenses.length > 0 ? resource.expenses[0] : null;
-
-        const data = {
-            date: new Date().toISOString().split('T')[0],
-            actual_quantity: qty || 0,
-            actual_price: price || 0,
-            comment: comment || ''
-        };
-
-        let response;
-        if (expense) {
-            response = await fetch(`/expenses/${expense.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-        } else {
-            response = await fetch(`/budget/resources/${resourceId}/expenses/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
+        // 2. Upload photos if any
+        if (fileInput.files.length > 0) {
+            for (let i = 0; i < Math.min(fileInput.files.length, 3); i++) {
+                const formData = new FormData();
+                formData.append(`receipt_${i + 1}`, fileInput.files[i]);
+                await fetch(`/expenses/${expense.id}/receipt/${i + 1}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+            }
         }
 
-        if (!response.ok) throw new Error('Save failed');
-
+        // 3. Reload
         await loadExpenses(selectedExpenseObjectId);
+
     } catch (err) {
         console.error('Save error:', err);
         alert('Ошибка сохранения: ' + err.message);
-    }
-}
-
-async function uploadReceipt(resourceId, receiptNum, file) {
-    try {
-        const resource = findResourceById(resourceId);
-        if (!resource) return;
-
-        const expense = resource.expenses && resource.expenses.length > 0 ? resource.expenses[0] : null;
-        if (!expense) {
-            alert('Сначала введите количество и цену');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append(`receipt_${receiptNum}`, file);
-
-        const response = await fetch(`/expenses/${expense.id}/receipt/${receiptNum}`, {
-            method: 'PUT',
-            body: formData
-        });
-
-        if (!response.ok) throw new Error('Upload failed');
-
-        await loadExpenses(selectedExpenseObjectId);
-    } catch (err) {
-        console.error('Upload error:', err);
-        alert('Ошибка загрузки чека');
     }
 }
 
@@ -339,9 +376,10 @@ function calcWTBudget(wt) {
 function calcWTActual(wt) {
     if (!wt.resources) return 0;
     return wt.resources.reduce((sum, r) => {
-        if (!r.expenses || r.expenses.length === 0) return sum;
-        const exp = r.expenses[0];
-        return sum + (exp.actual_quantity * exp.actual_price);
+        if (!r.expenses) return sum;
+        // Sum all expenses for this resource
+        const resTotal = r.expenses.reduce((s, e) => s + (e.actual_quantity * e.actual_price), 0);
+        return sum + resTotal;
     }, 0);
 }
 
