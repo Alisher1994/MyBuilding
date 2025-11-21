@@ -139,17 +139,30 @@
                 </button>
                 <button class="icon-btn" id="download-expense" title="Скачать">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <div class="modal-content"
-                            style="max-width:90vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;">
-                            <span class="modal-close" id="photo-modal-close">&times;</span>
-                            <img id="photo-modal-img" src=""
-                                style="max-width:80vw;max-height:70vh;border-radius:10px;box-shadow:0 2px 16px #0002;"
-                                alt="Фото">
-                        </div>
+                        <path d="M10 3v10m0 0l-4-4m4 4l4-4" stroke="#0057d8" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <rect x="3" y="15" width="14" height="2" rx="1" fill="#0057d8" />
+                    </svg>
+                </button>
             </div>
+            <div id="expense-container"></div>
+        </div>
+    </div>
+    <button id="sidebar-close" class="sidebar-close" style="display:none;">✕</button>
 
-            <script src="app.js"></script>
-            <script src="budget.js"></script>
-    <script src="expense.js"></script>`n</body>
+    <!-- Модалка для просмотра фото -->
+    <div id="photo-modal" class="modal" style="display:none;">
+        <div class="modal-content"
+            style="max-width:90vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;">
+            <span class="modal-close" id="photo-modal-close">&times;</span>
+            <img id="photo-modal-img" src=""
+                style="max-width:80vw;max-height:70vh;border-radius:10px;box-shadow:0 2px 16px #0002;" alt="Фото">
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="budget.js"></script>
+    <script src="expense.js"></script>
+</body>
 
 </html>
