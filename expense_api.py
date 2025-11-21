@@ -2,6 +2,7 @@
 from fastapi import Request, HTTPException
 import time
 from datetime import date as dtdate
+import os
 
 # Get budget tree with expense data
 @app.get("/objects/{object_id}/expenses/tree")
@@ -59,6 +60,7 @@ async def add_expense(resource_id: int, request: Request):
     """Добавить расход для ресурса"""
     try:
         data = await request.json()
+        print(f"Adding expense for resource {resource_id}: {data}") # Debug log
         
         # Default to current date if not provided
         date_str = data.get("date")
@@ -67,9 +69,13 @@ async def add_expense(resource_id: int, request: Request):
         else:
             date_val = date_str
             
-        actual_quantity = float(data.get("actual_quantity", 0))
-        actual_price = float(data.get("actual_price", 0))
-        comment = data.get("comment", "")
+        # Handle potential None/Null values safely
+        qty_raw = data.get("actual_quantity")
+        price_raw = data.get("actual_price")
+        
+        actual_quantity = float(qty_raw) if qty_raw is not None else 0.0
+        actual_price = float(price_raw) if price_raw is not None else 0.0
+        comment = data.get("comment", "") or ""
         
         async with app.state.db.acquire() as conn:
             row = await conn.fetchrow("""
@@ -101,11 +107,13 @@ async def update_expense(expense_id: int, request: Request):
             param_count += 1
         if "actual_quantity" in data:
             updates.append(f"actual_quantity=${param_count}")
-            params.append(float(data["actual_quantity"]))
+            val = data["actual_quantity"]
+            params.append(float(val) if val is not None else 0.0)
             param_count += 1
         if "actual_price" in data:
             updates.append(f"actual_price=${param_count}")
-            params.append(float(data["actual_price"]))
+            val = data["actual_price"]
+            params.append(float(val) if val is not None else 0.0)
             param_count += 1
         if "comment" in data:
             updates.append(f"comment=${param_count}")

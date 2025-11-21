@@ -217,14 +217,8 @@ function createExpenseResourceElement(resource, wtNum, resNum) {
         }
     });
 
-    // Attach event listeners for the Add Form
-    const addBtn = detailsRow.querySelector('.btn-save-expense');
-    if (addBtn) {
-        addBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            await saveNewExpense(resource.id, detailsRow);
-        });
-    }
+    // Setup Add Form Listeners
+    setupAddFormListeners(detailsRow, resource.id);
 
     container.appendChild(div);
     container.appendChild(detailsRow);
@@ -232,79 +226,112 @@ function createExpenseResourceElement(resource, wtNum, resNum) {
 }
 
 function renderResourceDetails(resource, expenses) {
-    let historyHtml = '';
-    if (expenses.length > 0) {
-        historyHtml = `
-            <table class="expense-history-table">
-                <thead>
-                    <tr>
-                        <th>Дата</th>
-                        <th>Кол-во</th>
-                        <th>Цена</th>
-                        <th>Сумма</th>
-                        <th>Чеки</th>
-                        <th>Комментарий</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${expenses.map(exp => `
-                        <tr>
-                            <td>${exp.date || '—'}</td>
-                            <td>${fmt(exp.actual_quantity)}</td>
-                            <td>${fmt(exp.actual_price)}</td>
-                            <td>${fmt(exp.actual_quantity * exp.actual_price)}</td>
-                            <td class="history-receipts">
-                                ${exp.receipt_photo_1 ? `<a href="${exp.receipt_photo_1}" target="_blank"><img src="${exp.receipt_photo_1}" class="history-receipt-thumb"></a>` : ''}
-                                ${exp.receipt_photo_2 ? `<a href="${exp.receipt_photo_2}" target="_blank"><img src="${exp.receipt_photo_2}" class="history-receipt-thumb"></a>` : ''}
-                                ${exp.receipt_photo_3 ? `<a href="${exp.receipt_photo_3}" target="_blank"><img src="${exp.receipt_photo_3}" class="history-receipt-thumb"></a>` : ''}
-                            </td>
-                            <td>${exp.comment || ''}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
-    } else {
-        historyHtml = '<p style="color:#888;margin-bottom:15px;">Нет записей о расходах.</p>';
-    }
-
     const today = new Date().toISOString().split('T')[0];
 
-    const formHtml = `
-        <div class="add-expense-form">
-            <div class="form-group">
-                <label>Дата</label>
-                <input type="date" class="form-input exp-date" value="${today}">
-            </div>
-            <div class="form-group">
-                <label>Кол-во</label>
-                <input type="number" step="0.001" class="form-input exp-qty" placeholder="0">
-            </div>
-            <div class="form-group">
-                <label>Цена</label>
-                <input type="number" step="0.01" class="form-input exp-price" placeholder="0">
-            </div>
-            <div class="form-group">
-                <label>Комментарий</label>
-                <input type="text" class="form-input exp-comment" placeholder="Описание">
-            </div>
-            <div class="form-group">
-                <label>Чеки (до 3)</label>
-                <input type="file" class="form-input exp-file" multiple accept="image/*">
-            </div>
-            <div class="form-group">
-                <label>&nbsp;</label>
-                <button class="btn-save btn-save-expense">Добавить</button>
-            </div>
-        </div>
-    `;
-
     return `
-        <h4 style="margin:0 0 10px 0;">История закупок: ${resource.name}</h4>
-        ${historyHtml}
-        <h4 style="margin:15px 0 10px 0;">Добавить расход</h4>
-        ${formHtml}
+        <table class="expense-history-table">
+            <thead>
+                <tr>
+                    <th style="width:120px;">Дата</th>
+                    <th style="width:100px;">Кол-во</th>
+                    <th style="width:100px;">Цена</th>
+                    <th style="width:120px;">Сумма</th>
+                    <th style="width:120px;">Чеки</th>
+                    <th>Комментарий</th>
+                    <th style="width:50px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                ${expenses.map(exp => `
+                    <tr>
+                        <td>${exp.date || '—'}</td>
+                        <td>${fmt(exp.actual_quantity)}</td>
+                        <td>${fmt(exp.actual_price)}</td>
+                        <td>${fmt(exp.actual_quantity * exp.actual_price)}</td>
+                        <td class="receipt-cell">
+                            ${renderReceiptThumb(exp.receipt_photo_1)}
+                            ${renderReceiptThumb(exp.receipt_photo_2)}
+                            ${renderReceiptThumb(exp.receipt_photo_3)}
+                        </td>
+                        <td>${exp.comment || ''}</td>
+                        <td>
+                            <button onclick="deleteExpense(${exp.id})" style="color:red;border:none;background:none;cursor:pointer;" title="Удалить">✖</button>
+                        </td>
+                    </tr>
+                `).join('')}
+                
+                <!-- Add New Row -->
+                <tr class="add-row">
+                    <td><input type="date" class="table-input exp-date" value="${today}"></td>
+                    <td><input type="number" step="0.001" class="table-input exp-qty" placeholder="0"></td>
+                    <td><input type="number" step="0.01" class="table-input exp-price" placeholder="0"></td>
+                    <td class="exp-sum-display">0</td>
+                    <td class="receipt-cell">
+                        <div class="receipt-thumb-box add-receipt-box" data-idx="1"><span>+</span></div>
+                        <div class="receipt-thumb-box add-receipt-box" data-idx="2"><span>+</span></div>
+                        <div class="receipt-thumb-box add-receipt-box" data-idx="3"><span>+</span></div>
+                        <input type="file" class="exp-file-1" style="display:none;" accept="image/*">
+                        <input type="file" class="exp-file-2" style="display:none;" accept="image/*">
+                        <input type="file" class="exp-file-3" style="display:none;" accept="image/*">
+                    </td>
+                    <td><input type="text" class="table-input exp-comment" placeholder="Комментарий"></td>
+                    <td><button class="btn-add-row" title="Добавить">+</button></td>
+                </tr>
+            </tbody>
+        </table>
     `;
+}
+
+function renderReceiptThumb(url) {
+    if (!url) return '';
+    return `<a href="${url}" target="_blank" class="receipt-thumb-box"><img src="${url}"></a>`;
+}
+
+function setupAddFormListeners(container, resourceId) {
+    const qtyInput = container.querySelector('.exp-qty');
+    const priceInput = container.querySelector('.exp-price');
+    const sumDisplay = container.querySelector('.exp-sum-display');
+    const addBtn = container.querySelector('.btn-add-row');
+
+    // Auto-calc sum
+    const updateSum = () => {
+        const q = parseFloat(qtyInput.value) || 0;
+        const p = parseFloat(priceInput.value) || 0;
+        sumDisplay.textContent = fmt(q * p);
+    };
+    qtyInput.addEventListener('input', updateSum);
+    priceInput.addEventListener('input', updateSum);
+
+    // Receipt boxes
+    container.querySelectorAll('.add-receipt-box').forEach(box => {
+        box.addEventListener('click', () => {
+            const idx = box.dataset.idx;
+            const input = container.querySelector(`.exp-file-${idx}`);
+            input.click();
+        });
+    });
+
+    // File inputs change
+    [1, 2, 3].forEach(idx => {
+        const input = container.querySelector(`.exp-file-${idx}`);
+        input.addEventListener('change', (e) => {
+            const box = container.querySelector(`.add-receipt-box[data-idx="${idx}"]`);
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    box.innerHTML = `<img src="${ev.target.result}">`;
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            } else {
+                box.innerHTML = `<span>+</span>`;
+            }
+        });
+    });
+
+    // Add Button
+    addBtn.addEventListener('click', async () => {
+        await saveNewExpense(resourceId, container);
+    });
 }
 
 async function saveNewExpense(resourceId, container) {
@@ -312,7 +339,6 @@ async function saveNewExpense(resourceId, container) {
     const qtyVal = container.querySelector('.exp-qty').value;
     const priceVal = container.querySelector('.exp-price').value;
     const commentVal = container.querySelector('.exp-comment').value;
-    const fileInput = container.querySelector('.exp-file');
 
     if (!dateVal || !qtyVal || !priceVal) {
         alert('Заполните дату, количество и цену');
@@ -337,12 +363,13 @@ async function saveNewExpense(resourceId, container) {
         if (!res.ok) throw new Error('Failed to save expense');
         const expense = await res.json();
 
-        // 2. Upload photos if any
-        if (fileInput.files.length > 0) {
-            for (let i = 0; i < Math.min(fileInput.files.length, 3); i++) {
+        // 2. Upload photos
+        for (let i = 1; i <= 3; i++) {
+            const input = container.querySelector(`.exp-file-${i}`);
+            if (input.files && input.files[0]) {
                 const formData = new FormData();
-                formData.append(`receipt_${i + 1}`, fileInput.files[i]);
-                await fetch(`/expenses/${expense.id}/receipt/${i + 1}`, {
+                formData.append(`receipt_${i}`, input.files[0]);
+                await fetch(`/expenses/${expense.id}/receipt/${i}`, {
                     method: 'PUT',
                     body: formData
                 });
@@ -355,6 +382,18 @@ async function saveNewExpense(resourceId, container) {
     } catch (err) {
         console.error('Save error:', err);
         alert('Ошибка сохранения: ' + err.message);
+    }
+}
+
+async function deleteExpense(expenseId) {
+    if (!confirm('Удалить запись?')) return;
+    try {
+        const res = await fetch(`/expenses/${expenseId}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete');
+        await loadExpenses(selectedExpenseObjectId);
+    } catch (err) {
+        console.error(err);
+        alert('Ошибка удаления');
     }
 }
 
@@ -377,7 +416,6 @@ function calcWTActual(wt) {
     if (!wt.resources) return 0;
     return wt.resources.reduce((sum, r) => {
         if (!r.expenses) return sum;
-        // Sum all expenses for this resource
         const resTotal = r.expenses.reduce((s, e) => s + (e.actual_quantity * e.actual_price), 0);
         return sum + resTotal;
     }, 0);
@@ -401,3 +439,4 @@ function fmt(num) {
 }
 
 window.loadExpenses = loadExpenses;
+window.deleteExpense = deleteExpense;
