@@ -60,7 +60,7 @@
 }
 
 .collapse-btn:not(.collapsed) {
-    transform: rotate(90deg);
+    transform: rotate(0deg);
 }
 
 .collapse-btn:hover {
@@ -219,7 +219,7 @@
     margin: 8px 24px 4px 48px;
     padding: 8px 12px;
     display: grid;
-    grid-template-columns: 40px 60px 50px 1fr 50px 100px 100px 120px 150px 30px;
+    grid-template-columns: 40px 60px 50px 250px 50px 100px 100px 120px 200px 40px;
     gap: 8px;
     align-items: center;
     font-size: 11px;
@@ -236,7 +236,7 @@
     margin: 2px 24px 2px 48px;
     padding: 8px 12px;
     display: grid;
-    grid-template-columns: 40px 60px 50px 1fr 50px 100px 100px 120px 150px 30px;
+    grid-template-columns: 40px 60px 50px 250px 50px 100px 100px 120px 200px 40px;
     gap: 8px;
     align-items: center;
     font-size: 13px;
@@ -439,7 +439,7 @@
 
     .budget-resource-header,
     .budget-resource {
-        grid-template-columns: 40px 60px 50px 1fr 60px 80px 80px 100px 120px 30px;
+        grid-template-columns: 40px 60px 50px 200px 60px 80px 80px 100px 150px 40px;
         font-size: 12px;
     }
 }
