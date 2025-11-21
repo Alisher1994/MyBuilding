@@ -53,6 +53,24 @@ async def get_expenses_tree(object_id: int):
 # Add expense for resource
 @app.post("/budget/resources/{resource_id}/expenses/")
 async def add_expense(resource_id: int, data: dict = None, 
+                     receipt_1: UploadFile = File(None),
+                     receipt_2: UploadFile = File(None),
+                     receipt_3: UploadFile = File(None)):
+    """Добавить расход для ресурса"""
+    from fastapi import Form
+    import json
+    
+    # Handle form data
+    date = data.get("date") if data else None
+    actual_quantity = float(data.get("actual_quantity", 0)) if data else 0
+    actual_price = float(data.get("actual_price", 0)) if data else 0
+    comment = data.get("comment", "") if data else ""
+    
+    # Save receipt photos
+    receipt_paths = [None, None, None]
+    for idx, receipt in enumerate([receipt_1, receipt_2, receipt_3]):
+        if receipt and receipt.filename:
+            filename = f"{int(time.time() * 1000)}_{receipt.filename}"
             filepath = os.path.join(UPLOAD_DIR, filename)
             with open(filepath, "wb") as f:
                 f.write(await receipt.read())
