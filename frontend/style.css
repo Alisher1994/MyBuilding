@@ -726,6 +726,29 @@ body {
     .budget-resource {
         margin: 2px 16px;
     }
+
+    /* Make budget and expense sections horizontally scrollable on small screens */
+    #budget-container,
+    #expense-container,
+    .budget-work-types-container,
+    .budget-resources-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Ensure wide grid elements keep their layout and allow scrolling */
+    .budget-work-type-header,
+    .budget-resource,
+    .budget-resource-header,
+    .expense-history-table {
+        min-width: 900px;
+    }
+
+    /* Hide rename/delete buttons on mobile */
+    #rename-btn,
+    #delete-btn {
+        display: none !important;
+    }
 }
 
 @media (max-width: 1200px) {
