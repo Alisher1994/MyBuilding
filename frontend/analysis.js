@@ -253,9 +253,18 @@ function renderAnalysis() {
                     const obj = await res.json();
                     const nameEl = document.getElementById('object-name');
                     if (nameEl) nameEl.textContent = obj.name || 'Объект';
-                    if (areaInput && (obj.area !== undefined && obj.area !== null)) areaInput.value = obj.area;
-                    if (start && obj.start_date) start.value = obj.start_date;
-                    if (end && obj.end_date) end.value = obj.end_date;
+                        if (areaInput && (obj.area !== undefined && obj.area !== null)) {
+                            areaInput.value = obj.area;
+                            analysisData.area = parseFloat(obj.area) || 0;
+                        }
+                        if (start && obj.start_date) {
+                            start.value = obj.start_date;
+                            analysisData.startDate = obj.start_date;
+                        }
+                        if (end && obj.end_date) {
+                            end.value = obj.end_date;
+                            analysisData.endDate = obj.end_date;
+                        }
                     // attach inline edit behaviour for object name (reuse makeEditable from budget.js if present)
                     const nameElem = document.getElementById('object-name');
                     if (nameElem) {
@@ -284,6 +293,8 @@ function renderAnalysis() {
                             };
                         }
                     }
+                    // ensure price bars reflect loaded area immediately
+                    updatePricePerM2();
                 }
             } catch (err) {
                 console.warn('Could not fetch object metadata', err);
