@@ -265,7 +265,7 @@ function renderResourceDetails(resource, expenses) {
                         </td>
                         <td>${exp.comment || ''}</td>
                         <td>
-                            <button class="btn btn-icon btn-delete" onclick="deleteExpense(${exp.id})" title="Удалить">✕</button>
+                            <button class="btn-icon btn-delete" onclick="deleteExpense(${exp.id})" title="Удалить">✕</button>
                         </td>
                     </tr>
                 `).join('')}

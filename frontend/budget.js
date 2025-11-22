@@ -124,8 +124,8 @@ function createStageElement(stage, stageIdx, startWorkTypeNum) {
         </span>
         <span class="stage-name editable" data-stage-id="${stage.id}" data-field="name">${stage.name}</span>
         <span class="stage-sum">${formatNum(stageSum)} сум</span>
-        <button class="btn btn-icon btn-add" data-stage-id="${stage.id}" title="Добавить вид работ">+</button>
-        <button class="btn btn-icon btn-delete" data-stage-id="${stage.id}" title="Удалить этап">✕</button>
+        <button class="btn-icon btn-add" data-stage-id="${stage.id}" title="Добавить вид работ">+</button>
+        <button class="btn-icon btn-delete" data-stage-id="${stage.id}" title="Удалить этап">✕</button>
     `;
     div.appendChild(header);
 
@@ -176,8 +176,8 @@ function createWorkTypeElement(workType, num, stageId) {
         <span class="wt-quantity editable" data-wt-id="${workType.id}" data-field="quantity">${formatNum(workType.quantity)}</span>
         <span class="wt-price">${formatNum(wtPrice)}</span>
         <span class="wt-sum">${formatNum(wtSum)}</span>
-        <button class="btn btn-icon btn-add" data-wt-id="${workType.id}" title="Добавить ресурс">+</button>
-        <button class="btn btn-icon btn-delete" data-wt-id="${workType.id}" title="Удалить вид работ">✕</button>
+        <button class="btn-icon btn-add" data-wt-id="${workType.id}" title="Добавить ресурс">+</button>
+        <button class="btn-icon btn-delete" data-wt-id="${workType.id}" title="Удалить вид работ">✕</button>
     `;
     div.appendChild(header);
 
@@ -255,7 +255,7 @@ function createResourceElement(resource, workTypeNum, resNum, workTypeId) {
         <span class="res-price editable" data-res-id="${resource.id}" data-field="price">${formatNum(resource.price)}</span>
         <span class="res-sum">${formatNum(resSum)}</span>
         <span class="res-supplier editable" data-res-id="${resource.id}" data-field="supplier">${resource.supplier || ''}</span>
-        <button class="btn btn-icon btn-delete" data-res-id="${resource.id}" title="Удалить ресурс">✕</button>
+        <button class="btn-icon btn-delete" data-res-id="${resource.id}" title="Удалить ресурс">✕</button>
     `;
 
     // Обработчики событий
