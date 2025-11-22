@@ -24,22 +24,24 @@
             style="display:none; align-items: center; justify-content: space-between; gap: 10px;">
             <button id="sidebar-toggle" class="sidebar-toggle">☰</button>
             <div id="tabs" style="margin-top:30px;">
-                <div class="tabs-header">
-                    <button class="tab-btn" data-tab="analysis">Анализ</button>
-                    <button class="tab-btn" data-tab="income">Приход</button>
-                    <button class="tab-btn" data-tab="budget">Бюджет</button>
-                    <button class="tab-btn" data-tab="expense">Расход</button>
+                <div class="tabs-scroll">
+                    <div class="tabs-header">
+                        <button class="tab-btn" data-tab="analysis">Анализ</button>
+                        <button class="tab-btn" data-tab="income">Приход</button>
+                        <button class="tab-btn" data-tab="budget">Бюджет</button>
+                        <button class="tab-btn" data-tab="expense">Расход</button>
+                    </div>
                 </div>
             </div>
             <div id="object-actions" style="gap: 10px;">
                 <input id="rename-input" type="text" style="display:none;">
-                <button id="rename-btn">Переименовать</button>
-                <button id="delete-btn">Удалить</button>
+                <button id="rename-btn" class="btn btn-secondary">Переименовать</button>
+                <button id="delete-btn" class="btn btn-secondary">Удалить</button>
             </div>
         </div>
         <div id="tab-analysis" class="tab-content" style="display:none;">
             <div class="tab-actions">
-                <button class="icon-btn" id="download-analysis" title="Скачать">
+                <button class="btn btn-icon" id="download-analysis" title="Скачать">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="#0057d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="lucide lucide-file-down-icon lucide-file-down">
@@ -55,13 +57,13 @@
         </div>
         <div id="tab-income" class="tab-content" style="display:none;">
             <div class="tab-actions">
-                <button class="icon-btn" id="add-income" title="Добавить">
+                <button class="btn btn-icon" id="add-income" title="Добавить">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                         <circle cx="10" cy="10" r="9" stroke="#0057d8" stroke-width="2" />
                         <path d="M10 6v8M6 10h8" stroke="#0057d8" stroke-width="2" stroke-linecap="round" />
                     </svg>
                 </button>
-                <button class="icon-btn" id="download-income" title="Скачать">
+                <button class="btn btn-icon" id="download-income" title="Скачать">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="#0057d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="lucide lucide-file-down-icon lucide-file-down">
@@ -114,7 +116,8 @@
                     <label>Кто передал:<br><input type="text" id="income-from" required></label><br>
                     <label>Кто получил:<br><input type="text" id="income-to" required></label><br>
                     <label>Комментарии:<br><textarea id="income-comment"></textarea></label><br>
-                    <button type="submit" class="icon-btn" style="background:#0057d8;color:#fff;">Сохранить</button>
+                    <button type="submit" class="btn btn-primary"
+                        style="background:#0057d8;color:#fff;">Сохранить</button>
                 </form>
                 <input type="hidden" id="income-edit-index">
             </div>
@@ -122,7 +125,7 @@
 
         <div id="tab-budget" class="tab-content" style="display:none;">
             <div class="tab-actions">
-                <button class="icon-btn" id="add-budget-group" title="Добавить этап">
+                <button class="btn btn-icon" id="add-budget-group" title="Добавить этап">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="#0057d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="lucide lucide-folder-down-icon lucide-folder-down">
@@ -132,7 +135,7 @@
                         <path d="m15 13-3 3-3-3" />
                     </svg>
                 </button>
-                <button class="icon-btn" id="download-budget" title="Скачать">
+                <button class="btn btn-icon" id="download-budget" title="Скачать">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="#0057d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="lucide lucide-file-down-icon lucide-file-down">
@@ -144,12 +147,14 @@
                     </svg>
                 </button>
             </div>
-            <div id="budget-container"></div>
+            <div class="table-scroll">
+                <div id="budget-container"></div>
+            </div>
         </div>
 
         <div id="tab-expense" class="tab-content" style="display:none;">
             <div class="tab-actions">
-                <button class="icon-btn" id="download-expense" title="Скачать">
+                <button class="btn btn-icon" id="download-expense" title="Скачать">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="#0057d8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         class="lucide lucide-file-down-icon lucide-file-down">
@@ -161,7 +166,9 @@
                     </svg>
                 </button>
             </div>
-            <div id="expense-container"></div>
+            <div class="table-scroll">
+                <div id="expense-container"></div>
+            </div>
         </div>
     </div>
     <button id="sidebar-close" class="sidebar-close" style="display:none;">✕</button>

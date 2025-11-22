@@ -113,10 +113,10 @@ function renderIncomeTable() {
             <td>${row.receiver || row.to || ''}</td>
             <td>${row.comment || ''}</td>
             <td>
-                <button class="icon-btn income-edit" title="Изменить" data-idx="${idx}">
+                <button class="btn btn-icon income-edit" title="Изменить" data-idx="${idx}">
                     <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M4 13.5V16h2.5l7.1-7.1-2.5-2.5L4 13.5z" stroke="#0057d8" stroke-width="1.5"/><path d="M13.5 6.5l2 2" stroke="#0057d8" stroke-width="1.5" stroke-linecap="round"/></svg>
                 </button>
-                <button class="icon-btn income-delete" title="Удалить" data-idx="${idx}">
+                <button class="btn btn-icon income-delete" title="Удалить" data-idx="${idx}">
                     <svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="5" y="8" width="10" height="7" rx="2" stroke="#d80027" stroke-width="1.5"/><path d="M8 10v3M12 10v3" stroke="#d80027" stroke-width="1.5" stroke-linecap="round"/><rect x="8" y="4" width="4" height="2" rx="1" fill="#d80027"/></svg>
                 </button>
             </td>

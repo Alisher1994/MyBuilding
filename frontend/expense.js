@@ -265,7 +265,7 @@ function renderResourceDetails(resource, expenses) {
                         </td>
                         <td>${exp.comment || ''}</td>
                         <td>
-                            <button class="btn-icon btn-delete" onclick="deleteExpense(${exp.id})" title="Удалить">✕</button>
+                            <button class="btn btn-icon btn-delete" onclick="deleteExpense(${exp.id})" title="Удалить">✕</button>
                         </td>
                     </tr>
                 `).join('')}
@@ -535,7 +535,7 @@ function downloadExpense() {
                                     exp.receipt_photo_1,
                                     exp.receipt_photo_2,
                                     exp.receipt_photo_3
-                                ].filter(Boolean).map(url => 
+                                ].filter(Boolean).map(url =>
                                     `<img src="${url}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 2px; margin-right: 2px;" alt="Чек">`
                                 ).join('') || '—';
 
