@@ -207,6 +207,16 @@
     background: linear-gradient(90deg, #FF9800 0%, #FFB74D 100%);
 }
 
+/* Остаток - оранжевый градиент */
+.analysis-progress-bar.balance {
+    background: linear-gradient(90deg, #FF9800 0%, #FFB74D 100%);
+}
+
+/* Перерасход - фиолетово-розовый градиент */
+.analysis-progress-bar.overrun {
+    background: linear-gradient(90deg, #8E24AA 0%, #F06292 100%);
+}
+
 /* Колонки по типам ресурсов */
 .analysis-resources-section {
     margin-bottom: 40px;

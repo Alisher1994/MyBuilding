@@ -539,8 +539,10 @@ function renderProgressBars() {
         { label: 'Бюджет', value: analysisData.budget, class: 'neutral' },
         { label: 'Приход', value: analysisData.income, class: 'positive' },
         { label: 'Расход', value: analysisData.expense, class: 'negative' },
-        { label: 'Остаток', value: analysisData.balance, class: analysisData.balance >= 0 ? 'positive' : 'negative' },
-        { label: 'Перерасход', value: analysisData.overrun, class: analysisData.overrun >= 0 ? 'positive' : 'negative' }
+        // 'Остаток' will use orange (balance) regardless of sign as requested
+        { label: 'Остаток', value: analysisData.balance, class: 'balance' },
+        // 'Перерасход' uses purple/pink gradient
+        { label: 'Перерасход', value: analysisData.overrun, class: 'overrun' }
     ];
 
     return items.map(item => {
