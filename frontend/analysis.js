@@ -980,6 +980,7 @@ function exportAnalysisReport() {
     <style>${styles}</style>
 </head>
 <body>
+    <img class="pdf-logo" src="/frontend/assets/design_key.png" alt="logo" style="position:fixed;top:10px;right:10px;width:64px;height:auto;opacity:0.95;z-index:9999;">
     <div class="header">
         <h1>Анализ объекта: ${objectName}</h1>
         <p>Дата формирования отчета: ${dateStr} в ${timeStr}</p>
