@@ -57,7 +57,7 @@ async function loadAnalysis(objectId) {
         renderAnalysis();
     } catch (err) {
         console.error('Error loading analysis:', err);
-        document.getElementById('analysis-container').innerHTML = 
+        document.getElementById('analysis-container').innerHTML =
             '<p style="padding:20px;text-align:center;color:#999;">Ошибка загрузки данных</p>';
     }
 }
@@ -277,18 +277,18 @@ function renderAnalysis() {
                     const obj = await res.json();
                     const nameEl = document.getElementById('object-name');
                     if (nameEl) nameEl.textContent = obj.name || 'Объект';
-                        if (areaInput && (obj.area !== undefined && obj.area !== null)) {
-                            areaInput.value = obj.area;
-                            analysisData.area = parseFloat(obj.area) || 0;
-                        }
-                        if (start && obj.start_date) {
-                            start.value = obj.start_date;
-                            analysisData.startDate = obj.start_date;
-                        }
-                        if (end && obj.end_date) {
-                            end.value = obj.end_date;
-                            analysisData.endDate = obj.end_date;
-                        }
+                    if (areaInput && (obj.area !== undefined && obj.area !== null)) {
+                        areaInput.value = obj.area;
+                        analysisData.area = parseFloat(obj.area) || 0;
+                    }
+                    if (start && obj.start_date) {
+                        start.value = obj.start_date;
+                        analysisData.startDate = obj.start_date;
+                    }
+                    if (end && obj.end_date) {
+                        end.value = obj.end_date;
+                        analysisData.endDate = obj.end_date;
+                    }
                     // attach inline edit behaviour for object name (reuse makeEditable from budget.js if present)
                     const nameElem = document.getElementById('object-name');
                     if (nameElem) {
@@ -385,7 +385,7 @@ function onImageSelected(event, idx) {
                 console.error('Upload failed', err);
                 // fallback to local data URL
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     analysisData.analysisPhotos[idx] = { id: null, url: e.target.result };
                     renderAnalysis();
                 };
@@ -393,7 +393,7 @@ function onImageSelected(event, idx) {
             });
     } else {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             analysisData.analysisPhotos[idx] = { id: null, url: e.target.result };
             renderAnalysis();
         };
@@ -506,37 +506,503 @@ function svgIcon(name) {
     }
 }
 
-// Export current analysis as a simple HTML report in new tab
+// Export current analysis as a complete HTML report in new tab with all styles and images
 function exportAnalysisReport() {
     // Client-side export: open HTML in new window and print (no server call)
-    const content = document.getElementById('analysis-container').innerHTML;
+    const content = document.getElementById('analysis-container');
     if (!content) {
         alert('Нет данных для экспорта');
         return;
     }
 
+    // Clone the content to manipulate it without affecting the original
+    const clonedContent = content.cloneNode(true);
+
+    // Remove interactive elements (buttons, inputs for editing)
+    const interactiveElements = clonedContent.querySelectorAll('.photo-overlay, input[type="file"], .collapser');
+    interactiveElements.forEach(el => el.remove());
+
+    // Expand all collapsed sections
+    const collapsedSections = clonedContent.querySelectorAll('.analysis-collapsible');
+    collapsedSections.forEach(section => {
+        section.classList.remove('collapsed');
+    });
+
+    // Remove collapse headers (make them static titles)
+    const collapseHeaders = clonedContent.querySelectorAll('.analysis-collapsible-header');
+    collapseHeaders.forEach(header => {
+        header.style.cursor = 'default';
+        header.onclick = null;
+    });
+
+    // Make inputs read-only and style them as text
+    const inputs = clonedContent.querySelectorAll('input[type="number"], input[type="date"]');
+    inputs.forEach(input => {
+        const span = document.createElement('span');
+        span.textContent = input.value || '—';
+        span.style.cssText = 'font-weight: 600; color: #333;';
+        input.parentNode.replaceChild(span, input);
+    });
+
     // Object name (if selected in sidebar)
     const objectName = document.querySelector('#object-list li.selected')?.textContent.trim() || 'Объект';
     const now = new Date();
     const dateStr = now.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
+    const timeStr = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Анализ - ${objectName}</title><style>
-        body{font-family:Arial,Helvetica,sans-serif;padding:20px;background:#fff;color:#222}
-        .header{text-align:center;margin-bottom:20px;border-bottom:2px solid #333;padding-bottom:12px}
-        .header h1{font-size:20px;margin-bottom:6px}
-        .header p{font-size:13px;color:#666}
-        .analysis-wrap{margin-top:16px}
-        img{max-width:100%;height:auto}
-        @media print{ body{padding:10px} }
-    </style></head><body>
-        <div class="header"><h1>${objectName}</h1><p>Дата формирования: ${dateStr}</p></div>
-        <div class="analysis-wrap">${content}</div>
-    </body></html>`;
+    // Comprehensive CSS styles for print
+    const styles = `
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, Helvetica, sans-serif;
+            padding: 30px;
+            background: #fff;
+            color: #222;
+            line-height: 1.6;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #0067c0;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0067c0;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Analysis Container */
+        #analysis-container {
+            padding: 0;
+        }
+        
+        /* Object Section */
+        .analysis-object-section {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+        
+        .analysis-section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .analysis-object-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .object-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #222;
+        }
+        
+        .object-quick-params {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .object-quick-params label {
+            font-size: 13px;
+            color: #444;
+            font-weight: 600;
+        }
+        
+        /* Photos */
+        .analysis-object-photos {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .photo-slot {
+            flex: 1 1 calc(25% - 15px);
+            min-width: 150px;
+        }
+        
+        .photo-preview {
+            width: 100%;
+            height: 180px;
+            position: relative;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .photo-preview img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .photo-placeholder {
+            font-size: 28px;
+            color: #ccc;
+        }
+        
+        /* Progress bars for price per m2 */
+        .analysis-object-params {
+            margin-top: 20px;
+        }
+        
+        .object-param-row {
+            margin-bottom: 15px;
+        }
+        
+        .price-m2-section {
+            width: 100%;
+        }
+        
+        .analysis-progress-item {
+            margin-bottom: 20px;
+        }
+        
+        .analysis-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .analysis-progress-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .analysis-progress-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #666;
+        }
+        
+        .analysis-progress-bar-container {
+            width: 100%;
+            height: 32px;
+            background: #f0f0f0;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .analysis-progress-bar {
+            height: 100%;
+            border-radius: 16px;
+            transition: none;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .analysis-progress-bar.neutral {
+            background: linear-gradient(90deg, #0067c0 0%, #2196F3 100%);
+        }
+        
+        .analysis-progress-bar.positive {
+            background: linear-gradient(90deg, #4CAF50 0%, #66BB6A 100%);
+        }
+        
+        .analysis-progress-bar.negative {
+            background: linear-gradient(90deg, #d32f2f 0%, #f44336 100%);
+        }
+        
+        .analysis-progress-bar.balance {
+            background: linear-gradient(90deg, #FF9800 0%, #FFB74D 100%);
+        }
+        
+        .analysis-progress-bar.overrun {
+            background: linear-gradient(90deg, #8E24AA 0%, #F06292 100%);
+        }
+        
+        /* Collapsible sections */
+        .analysis-collapsible {
+            margin-bottom: 25px;
+            border-radius: 8px;
+            overflow: visible;
+            page-break-inside: avoid;
+        }
+        
+        .analysis-collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            background: transparent;
+            cursor: default;
+        }
+        
+        .analysis-collapsible-body {
+            padding: 10px 0;
+        }
+        
+        /* Financial Cards */
+        .analysis-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .analysis-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .analysis-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-icon {
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        
+        .card-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .analysis-card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .analysis-card-value.positive {
+            color: #4CAF50;
+        }
+        
+        .analysis-card-value.negative {
+            color: #d32f2f;
+        }
+        
+        /* Resources Grid */
+        .analysis-resources-section {
+            margin-bottom: 30px;
+        }
+        
+        .analysis-resources-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        
+        .analysis-resource-column {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            page-break-inside: avoid;
+        }
+        
+        .analysis-resource-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .analysis-resource-title svg {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+        }
+        
+        .analysis-resource-chart {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 200px;
+            margin-bottom: 20px;
+            padding: 0 10px;
+            position: relative;
+        }
+        
+        .analysis-resource-bar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            max-width: 80px;
+        }
+        
+        .analysis-resource-bar-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+            order: 1;
+        }
+        
+        .analysis-resource-bar-wrapper {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 8px;
+            order: 3;
+        }
+        
+        .analysis-resource-bar {
+            width: 35px;
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            color: transparent;
+        }
+        
+        .analysis-resource-bar.plan {
+            background: linear-gradient(180deg, #2196F3 0%, #1976D2 100%);
+        }
+        
+        .analysis-resource-bar.fact {
+            background: linear-gradient(180deg, #f44336 0%, #d32f2f 100%);
+        }
+        
+        .analysis-resource-bar-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: #000;
+            text-align: center;
+            margin-bottom: 8px;
+            order: 2;
+        }
+        
+        .analysis-resource-diff {
+            margin-top: 16px;
+            padding: 10px 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .analysis-resource-diff.positive {
+            background: #e8f5e9;
+            color: #4CAF50;
+        }
+        
+        .analysis-resource-diff.negative {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                padding: 15px;
+            }
+            .header {
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+            }
+            .analysis-collapsible,
+            .analysis-card,
+            .analysis-resource-column,
+            .analysis-object-section {
+                page-break-inside: avoid;
+            }
+            .analysis-resources-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        @page {
+            margin: 1.5cm;
+        }
+    `;
+
+    const html = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анализ - ${objectName}</title>
+    <style>${styles}</style>
+</head>
+<body>
+    <div class="header">
+        <h1>Анализ объекта: ${objectName}</h1>
+        <p>Дата формирования отчета: ${dateStr} в ${timeStr}</p>
+    </div>
+    <div class="analysis-wrap">
+        ${clonedContent.innerHTML}
+    </div>
+    <script>
+        // Auto-print when page loads
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+</body>
+</html>`;
 
     const win = window.open('', '_blank');
-    win.document.write(html);
-    win.document.close();
-    win.onload = function () { try { win.print(); } catch (e) { console.warn('Print failed', e); } };
+    if (win) {
+        win.document.write(html);
+        win.document.close();
+    } else {
+        alert('Не удалось открыть новое окно. Проверьте настройки блокировки всплывающих окон.');
+    }
 }
 
 // Expose handlers to global scope for inline handlers
@@ -643,7 +1109,7 @@ function renderResourceColumns() {
                     </div>
                 </div>
             `;
-        }).join('');
+    }).join('');
 }
 
 // Форматирование чисел
