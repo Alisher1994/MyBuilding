@@ -30,6 +30,8 @@ function showPasswordGate() {
             // if user cancelled, keep asking
             if (val === null) continue;
             if (val === correct) {
+                // remember success for this session
+                try { sessionStorage.setItem('pw_ok', '1'); } catch (e) { /* ignore */ }
                 // remove overlay and exit
                 const el = document.getElementById('pw-overlay');
                 if (el) el.parentNode.removeChild(el);
@@ -39,6 +41,18 @@ function showPasswordGate() {
             }
         }
     }, 0);
+}
+
+// Invoke password gate on load unless already accepted in this session
+try {
+    if (!sessionStorage.getItem('pw_ok')) {
+        window.addEventListener('load', () => {
+            showPasswordGate();
+        });
+    }
+} catch (e) {
+    // sessionStorage may be unavailable in some contexts; fallback to showing gate
+    window.addEventListener('load', () => showPasswordGate());
 }
 
 // --- Helper: Format Number (1 000 000) ---
