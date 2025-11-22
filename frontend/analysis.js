@@ -8,6 +8,12 @@ let analysisData = {
     overrun: 0,
     resources: {}
 };
+// Collapsed state for sections: true = collapsed
+analysisData.collapsedSections = {
+    cards: true,
+    progress: true,
+    resources: true
+};
 
 // Icons for resource types in Analysis (black stroke)
 const ANALYSIS_RESOURCE_ICONS = {
@@ -199,40 +205,57 @@ function renderAnalysis() {
             </div>
         </div>
 
-        <!-- Финансовые карточки -->
-        <div class="analysis-cards-section">
-            <h2 class="analysis-section-title">Аналитика по финансам</h2>
-            <div class="analysis-cards-grid single-row">
-                <div class="analysis-card">
-                    <div class="analysis-card-title"><span class="card-icon">${svgIcon('income')}</span>Приход</div>
-                    <div class="analysis-card-value positive">${formatNum(analysisData.income)} сум</div>
-                </div>
-                <div class="analysis-card">
-                    <div class="analysis-card-title"><span class="card-icon">${svgIcon('expense')}</span>Расход</div>
-                    <div class="analysis-card-value negative">${formatNum(analysisData.expense)} сум</div>
-                </div>
-                <div class="analysis-card">
-                    <div class="analysis-card-title"><span class="card-icon">${svgIcon('balance')}</span>Остаток</div>
-                    <div class="analysis-card-value ${analysisData.balance >= 0 ? 'positive' : 'negative'}">${formatNum(analysisData.balance)} сум</div>
-                </div>
-                <div class="analysis-card">
-                    <div class="analysis-card-title"><span class="card-icon">${svgIcon('overrun')}</span>Перерасход</div>
-                    <div class="analysis-card-value ${analysisData.overrun >= 0 ? 'positive' : 'negative'}">${formatNum(analysisData.overrun)} сум</div>
+        <!-- Финансовые карточки (collapsible) -->
+        <div class="analysis-collapsible ${analysisData.collapsedSections.cards ? 'collapsed' : ''}" data-section="cards">
+            <div class="analysis-collapsible-header" onclick="toggleAnalysisSection('cards')">
+                <span class="analysis-section-title">Аналитика по финансам</span>
+                <button class="collapser">${analysisData.collapsedSections.cards ? '+' : '−'}</button>
+            </div>
+            <div class="analysis-collapsible-body">
+                <div class="analysis-cards-grid single-row">
+                    <div class="analysis-card">
+                        <div class="analysis-card-title"><span class="card-icon">${svgIcon('income')}</span>Приход</div>
+                        <div class="analysis-card-value positive">${formatNum(analysisData.income)} сум</div>
+                    </div>
+                    <div class="analysis-card">
+                        <div class="analysis-card-title"><span class="card-icon">${svgIcon('expense')}</span>Расход</div>
+                        <div class="analysis-card-value negative">${formatNum(analysisData.expense)} сум</div>
+                    </div>
+                    <div class="analysis-card">
+                        <div class="analysis-card-title"><span class="card-icon">${svgIcon('balance')}</span>Остаток</div>
+                        <div class="analysis-card-value ${analysisData.balance >= 0 ? 'positive' : 'negative'}">${formatNum(analysisData.balance)} сум</div>
+                    </div>
+                    <div class="analysis-card">
+                        <div class="analysis-card-title"><span class="card-icon">${svgIcon('overrun')}</span>Перерасход</div>
+                        <div class="analysis-card-value ${analysisData.overrun >= 0 ? 'positive' : 'negative'}">${formatNum(analysisData.overrun)} сум</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Прогресс-бары -->
-        <div class="analysis-progress-section">
-            <h2 class="analysis-section-title">Аналитика по финансам (прогресс-бары)</h2>
-            ${renderProgressBars()}
+        <!-- Прогресс-бары (collapsible) -->
+        <div class="analysis-collapsible ${analysisData.collapsedSections.progress ? 'collapsed' : ''}" data-section="progress">
+            <div class="analysis-collapsible-header" onclick="toggleAnalysisSection('progress')">
+                <span class="analysis-section-title">Аналитика по финансам (прогресс-бары)</span>
+                <button class="collapser">${analysisData.collapsedSections.progress ? '+' : '−'}</button>
+            </div>
+            <div class="analysis-collapsible-body">
+                ${renderProgressBars()}
+            </div>
         </div>
 
-        <!-- По типам ресурсов -->
-        <div class="analysis-resources-section">
-            <h2 class="analysis-section-title">Аналитика по типам ресурсов</h2>
-            <div class="analysis-resources-grid">
-                ${renderResourceColumns()}
+        <!-- По типам ресурсов (collapsible) -->
+        <div class="analysis-collapsible ${analysisData.collapsedSections.resources ? 'collapsed' : ''}" data-section="resources">
+            <div class="analysis-collapsible-header" onclick="toggleAnalysisSection('resources')">
+                <span class="analysis-section-title">Аналитика по типам ресурсов</span>
+                <button class="collapser">${analysisData.collapsedSections.resources ? '+' : '−'}</button>
+            </div>
+            <div class="analysis-collapsible-body">
+                <div class="analysis-resources-section">
+                    <div class="analysis-resources-grid">
+                        ${renderResourceColumns()}
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -523,6 +546,14 @@ window.viewImageFromSlot = viewImageFromSlot;
 window.onPreviewClick = onPreviewClick;
 window.onObjectFieldChange = onObjectFieldChange;
 window.exportAnalysisReport = exportAnalysisReport;
+// Toggle collapsible analysis sections
+function toggleAnalysisSection(name) {
+    if (!analysisData.collapsedSections) analysisData.collapsedSections = { cards: true, progress: true, resources: true };
+    analysisData.collapsedSections[name] = !analysisData.collapsedSections[name];
+    // Re-render so header buttons and bodies update
+    renderAnalysis();
+}
+window.toggleAnalysisSection = toggleAnalysisSection;
 
 
 // Рендеринг прогресс-баров
