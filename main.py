@@ -123,9 +123,20 @@ async def add_income(object_id: int, date: str = Form(...), amount: float = Form
         raise HTTPException(status_code=500, detail=f"{e}\n{tb}")
 
 
+@app.get('/objects/{object_id}/analysis_photos/')
+async def list_analysis_photos(object_id: int):
+    try:
+        async with app.state.db.acquire() as conn:
+            rows = await conn.fetch("SELECT id, file_path FROM object_analysis_photos WHERE object_id=$1 ORDER BY id", object_id)
+        return [{"id": r["id"], "url": r["file_path"]} for r in rows]
+    except Exception as e:
+        print(f"Error listing analysis photos: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post('/objects/{object_id}/analysis_photos/')
 async def upload_analysis_photo(object_id: int, photo: UploadFile = File(...)):
-    """Save an analysis photo to uploads and return its public URL."""
+    """Save an analysis photo to uploads, insert DB record and return id+url."""
     try:
         orig = os.path.basename(photo.filename)
         safe = re.sub(r'[^A-Za-z0-9_.-]', '_', orig)
@@ -134,9 +145,39 @@ async def upload_analysis_photo(object_id: int, photo: UploadFile = File(...)):
         with open(dest, 'wb') as f:
             shutil.copyfileobj(photo.file, f)
         url = f"/uploads/{fname}"
-        return {"url": url}
+        # Insert into DB
+        async with app.state.db.acquire() as conn:
+            row = await conn.fetchrow("INSERT INTO object_analysis_photos (object_id, file_path) VALUES ($1, $2) RETURNING id, file_path", object_id, url)
+        return {"id": row["id"], "url": row["file_path"]}
     except Exception as e:
         print(f"Error saving analysis photo: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete('/objects/{object_id}/analysis_photos/{photo_id}')
+async def delete_analysis_photo(object_id: int, photo_id: int):
+    try:
+        async with app.state.db.acquire() as conn:
+            row = await conn.fetchrow("SELECT file_path FROM object_analysis_photos WHERE id=$1 AND object_id=$2", photo_id, object_id)
+            if not row:
+                raise HTTPException(status_code=404, detail='Photo not found')
+            file_path = row['file_path']
+            # Delete DB row
+            await conn.execute("DELETE FROM object_analysis_photos WHERE id=$1", photo_id)
+        # Remove file from disk if exists
+        if file_path and file_path.startswith('/uploads/'):
+            fn = file_path.replace('/uploads/', '')
+            dest = os.path.join(UPLOAD_DIR, fn)
+            try:
+                if os.path.exists(dest):
+                    os.remove(dest)
+            except Exception as e:
+                print(f"Failed to remove file {dest}: {e}")
+        return {"status": "deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting analysis photo: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -297,6 +338,16 @@ async def create_tables():
                 receipt_photo_2 TEXT,
                 receipt_photo_3 TEXT,
                 comment TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        # Таблица для фото, загружаемых в разделе Анализ
+        await connection.execute("""
+            CREATE TABLE IF NOT EXISTS object_analysis_photos (
+                id SERIAL PRIMARY KEY,
+                object_id INTEGER NOT NULL REFERENCES objects(id) ON DELETE CASCADE,
+                file_path TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)

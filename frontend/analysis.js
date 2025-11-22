@@ -32,6 +32,8 @@ async function loadAnalysis(objectId) {
 
         // Рассчитываем показатели
         calculateAnalysis(budgetData, incomeData, expenseData);
+        // Загрузим сохранённые фото для этого объекта
+        await loadAnalysisPhotos(objectId);
         renderAnalysis();
     } catch (err) {
         console.error('Error loading analysis:', err);
@@ -136,8 +138,8 @@ function renderAnalysis() {
     const container = document.getElementById('analysis-container');
     if (!container) return;
 
-    // Ensure images array exists (4 slots)
-    if (!analysisData.images) analysisData.images = [null, null, null, null];
+    // Ensure analysisPhotos array exists (4 slots)
+    if (!analysisData.analysisPhotos) analysisData.analysisPhotos = [null, null, null, null];
 
     container.innerHTML = `
         <!-- Данные объекта -->
@@ -215,20 +217,35 @@ function renderAnalysis() {
     }, 0);
 }
 
-// Helper: render 4 image upload slots
+// Helper: load analysis photos from server
+async function loadAnalysisPhotos(objectId) {
+    try {
+        const res = await fetch(`/objects/${objectId}/analysis_photos/`);
+        if (!res.ok) throw new Error('Failed to load photos');
+        const list = await res.json();
+        // Build fixed-size array of 4 slots
+        analysisData.analysisPhotos = [null, null, null, null];
+        for (let i = 0; i < Math.min(list.length, 4); i++) {
+            analysisData.analysisPhotos[i] = { id: list[i].id, url: list[i].url };
+        }
+    } catch (err) {
+        console.warn('Could not load analysis photos:', err);
+        analysisData.analysisPhotos = [null, null, null, null];
+    }
+}
+
+// Helper: render 4 image upload slots using analysisData.analysisPhotos
 function renderImageUploadGrid() {
-    if (!analysisData.images) analysisData.images = [null, null, null, null];
-    return analysisData.images.map((src, idx) => {
+    if (!analysisData.analysisPhotos) analysisData.analysisPhotos = [null, null, null, null];
+    return analysisData.analysisPhotos.map((item, idx) => {
+        const src = item ? item.url : null;
         return `
             <div class="photo-slot">
-                <div class="photo-preview" id="photo-preview-${idx}">
-                    ${src ? `<img src="${src}" alt="photo-${idx}" onclick="viewImage(${idx})">` : `<div class="photo-placeholder">+</div>`}
+                <div class="photo-preview" id="photo-preview-${idx}" data-idx="${idx}" onclick="onPreviewClick(event, ${idx})">
+                    ${src ? `<img src="${src}" alt="photo-${idx}">` : `<div class="photo-placeholder">+</div>`}
+                    ${src ? `<div class="photo-overlay"><button class="overlay-btn view" onclick="viewImageFromSlot(event, ${idx})" title="Просмотр">👁</button><button class="overlay-btn del" onclick="removeImageFromSlot(event, ${idx})" title="Удалить">✕</button></div>` : ''}
                 </div>
-                <div class="photo-controls">
-                    <input type="file" accept="image/*" id="photo-input-${idx}" style="display:none;" onchange="onImageSelected(event, ${idx})">
-                    <button class="btn small" onclick="document.getElementById('photo-input-${idx}').click()">Выбрать</button>
-                    ${src ? `<button class="btn small" onclick="viewImage(${idx})">Просмотр</button><button class="btn small danger" onclick="removeImage(${idx})">Удалить</button>` : ''}
-                </div>
+                <input type="file" accept="image/*" id="photo-input-${idx}" style="display:none;" onchange="onImageSelected(event, ${idx})">
             </div>
         `;
     }).join('');
@@ -247,7 +264,8 @@ function onImageSelected(event, idx) {
             .then(res => res.json())
             .then(data => {
                 if (data && data.url) {
-                    analysisData.images[idx] = data.url;
+                    // store as object with id
+                    analysisData.analysisPhotos[idx] = { id: data.id, url: data.url };
                     renderAnalysis();
                 }
             })
@@ -256,7 +274,7 @@ function onImageSelected(event, idx) {
                 // fallback to local data URL
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    analysisData.images[idx] = e.target.result;
+                    analysisData.analysisPhotos[idx] = { id: null, url: e.target.result };
                     renderAnalysis();
                 };
                 reader.readAsDataURL(file);
@@ -264,23 +282,48 @@ function onImageSelected(event, idx) {
     } else {
         const reader = new FileReader();
         reader.onload = function(e) {
-            analysisData.images[idx] = e.target.result;
+            analysisData.analysisPhotos[idx] = { id: null, url: e.target.result };
             renderAnalysis();
         };
         reader.readAsDataURL(file);
     }
 }
 
-function removeImage(idx) {
-    analysisData.images[idx] = null;
-    renderAnalysis();
+function removeImageFromSlot(event, idx) {
+    event.stopPropagation();
+    const item = analysisData.analysisPhotos[idx];
+    if (!item) return;
+    if (item.id) {
+        // delete on server
+        fetch(`/objects/${analysisData.objectId}/analysis_photos/${item.id}`, { method: 'DELETE' })
+            .then(res => {
+                if (res.ok) {
+                    analysisData.analysisPhotos[idx] = null;
+                    renderAnalysis();
+                } else {
+                    alert('Не удалось удалить фото на сервере');
+                }
+            }).catch(err => { console.error(err); alert('Ошибка удаления'); });
+    } else {
+        analysisData.analysisPhotos[idx] = null;
+        renderAnalysis();
+    }
 }
 
-function viewImage(idx) {
-    const src = analysisData.images[idx];
-    if (!src) return;
-    const w = window.open('about:blank', '_blank');
-    w.document.write(`<img src="${src}" style="max-width:100%;height:auto;display:block;margin:0 auto;">`);
+function viewImageFromSlot(event, idx) {
+    event.stopPropagation();
+    const item = analysisData.analysisPhotos[idx];
+    if (!item || !item.url) return;
+    const modal = document.getElementById('photo-modal');
+    const modalImg = document.getElementById('photo-modal-img');
+    modalImg.src = item.url;
+    modal.style.display = 'flex';
+}
+
+function onPreviewClick(event, idx) {
+    // Clicking the preview opens file picker for that slot
+    const input = document.getElementById(`photo-input-${idx}`);
+    if (input) input.click();
 }
 
 function onObjectFieldChange() {
@@ -350,8 +393,9 @@ function exportAnalysisReport() {
 
 // Expose handlers to global scope for inline handlers
 window.onImageSelected = onImageSelected;
-window.removeImage = removeImage;
-window.viewImage = viewImage;
+window.removeImageFromSlot = removeImageFromSlot;
+window.viewImageFromSlot = viewImageFromSlot;
+window.onPreviewClick = onPreviewClick;
 window.onObjectFieldChange = onObjectFieldChange;
 window.exportAnalysisReport = exportAnalysisReport;
 
