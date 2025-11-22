@@ -160,24 +160,27 @@ function renderAnalysis() {
 
             <div class="analysis-object-params">
                 <div class="object-param-row prices-row">
-                        <div class="price-per-m2">
-                            <div class="analysis-progress-header">
-                                <span class="analysis-progress-label">Цена / м² (план)</span>
-                                <span class="analysis-progress-value" id="price-plan-value">0 сум</span>
+                            <div class="price-m2-section" style="width:100%">
+                                <div class="analysis-progress-item">
+                                    <div class="analysis-progress-header">
+                                        <span class="analysis-progress-label">Цена / м² (план)</span>
+                                        <span class="analysis-progress-value" id="price-plan-value">0 сум</span>
+                                    </div>
+                                    <div class="analysis-progress-bar-container">
+                                        <div class="analysis-progress-bar neutral" id="price-plan-bar" style="width:0%"> </div>
+                                    </div>
+                                </div>
+
+                                <div class="analysis-progress-item">
+                                    <div class="analysis-progress-header">
+                                        <span class="analysis-progress-label">Цена / м² (факт)</span>
+                                        <span class="analysis-progress-value" id="price-fact-value">0 сум</span>
+                                    </div>
+                                    <div class="analysis-progress-bar-container">
+                                        <div class="analysis-progress-bar" id="price-fact-bar" style="width:0%"> </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="analysis-progress-bar-container">
-                                <div class="analysis-progress-bar neutral" id="price-plan-bar" style="width:0%"></div>
-                            </div>
-                        </div>
-                        <div class="price-per-m2">
-                            <div class="analysis-progress-header">
-                                <span class="analysis-progress-label">Цена / м² (факт)</span>
-                                <span class="analysis-progress-value" id="price-fact-value">0 сум</span>
-                            </div>
-                            <div class="analysis-progress-bar-container">
-                                <div class="analysis-progress-bar" id="price-fact-bar" style="width:0%"></div>
-                            </div>
-                        </div>
                 </div>
             </div>
         </div>
