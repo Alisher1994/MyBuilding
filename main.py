@@ -200,6 +200,35 @@ async def export_analysis_pdf(request: Request):
             # Not installed; return HTML with informative header
             return HTMLResponse(content=html, status_code=501)
 
+        # Insert logo into HTML (top-right corner) if file exists
+        try:
+            logo_rel = os.path.join('frontend', 'assets', 'design_key.png')
+            logo_abs = os.path.abspath(logo_rel)
+            if os.path.exists(logo_abs):
+                # Use file:// URL for wkhtmltopdf to embed local file
+                logo_src = 'file://' + logo_abs.replace('\\', '/')
+                # CSS for positioning the logo in PDF
+                style_block = """
+<style>
+  .pdf-logo { position: fixed; top: 10px; right: 10px; width: 64px; height: auto; opacity: 0.95; z-index: 9999; }
+</style>
+"""
+                # Insert style into <head> or at the top
+                if re.search(r"<head[^>]*>", html, flags=re.IGNORECASE):
+                    html = re.sub(r"(<head[^>]*>)", r"\1\n" + style_block, html, flags=re.IGNORECASE)
+                else:
+                    html = style_block + html
+
+                # Prepare img tag
+                img_tag = f"<img class=\"pdf-logo\" src=\"{logo_src}\" alt=\"logo\">"
+                # Insert right after opening <body> if present, otherwise prepend
+                if re.search(r"<body[^>]*>", html, flags=re.IGNORECASE):
+                    html = re.sub(r"(<body[^>]*>)", r"\1\n" + img_tag, html, flags=re.IGNORECASE)
+                else:
+                    html = img_tag + html
+        except Exception as e:
+            print(f"Logo injection failed: {e}")
+
         # Create temp files
         with tempfile.NamedTemporaryFile(prefix='report_', suffix='.html', delete=False, mode='w', encoding='utf-8') as tf:
             tf.write(html)

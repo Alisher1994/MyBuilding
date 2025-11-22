@@ -634,3 +634,19 @@ document.addEventListener('DOMContentLoaded', () => {
 // При старте скрываем вкладки и кнопки
 // clearSelection(); // Don't clear on start, let restoreState handle it
 renderList();
+
+// Try to show sidebar logo if file exists at frontend/assets/design_key.png
+try {
+    const logoEl = document.getElementById('sidebar-logo');
+    if (logoEl) {
+        const img = new Image();
+        img.onload = () => {
+            logoEl.src = img.src;
+            logoEl.style.display = 'inline-block';
+        };
+        img.onerror = () => {
+            // keep hidden if not found
+        };
+        img.src = 'assets/design_key.png';
+    }
+} catch (e) { /* ignore */ }

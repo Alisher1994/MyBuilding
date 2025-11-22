@@ -36,6 +36,15 @@ body {
     padding: 0 4px;
 }
 
+/* Sidebar logo (optional). To use, put `design_key.png` into `frontend/assets/` */
+#sidebar-logo {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    margin-right: 8px;
+    display: inline-block;
+}
+
 .sidebar-header h2,
 .sidebar-header span {
     font-size: 12px;
