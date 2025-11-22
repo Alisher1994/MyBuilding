@@ -145,23 +145,28 @@ function renderAnalysis() {
         <!-- Данные объекта -->
         <div class="analysis-object-section">
             <h2 class="analysis-section-title">Данные объекта</h2>
+            <div class="analysis-object-header">
+                <div class="object-name-wrap"><span id="object-name" class="object-name editable">Объект</span></div>
+                <div class="object-quick-params">
+                    <label>Общая площадь (м²)<br><input type="number" id="obj-area" min="0" step="0.01" value="0" oninput="onObjectFieldChange()"></label>
+                    <label>Дата начала<br><input type="date" id="obj-start-date" onchange="onObjectFieldChange()"></label>
+                    <label>Дата окончания<br><input type="date" id="obj-end-date" onchange="onObjectFieldChange()"></label>
+                </div>
+            </div>
+
             <div class="analysis-object-photos">
                 ${renderImageUploadGrid()}
             </div>
+
             <div class="analysis-object-params">
-                <div class="object-param-row">
-                    <label>Дата начала <input type="date" id="obj-start-date" onchange="onObjectFieldChange()"></label>
-                    <label>Дата окончания <input type="date" id="obj-end-date" onchange="onObjectFieldChange()"></label>
-                    <label>Общая площадь (м²) <input type="number" id="obj-area" min="0" step="0.01" value="0" oninput="onObjectFieldChange()"></label>
-                </div>
                 <div class="object-param-row prices-row">
                     <div class="price-per-m2">
                         <div class="price-label">Цена / м² (план)</div>
-                        <div class="price-value" id="price-plan">0</div>
+                        <div class="price-bar-container" id="price-plan-bar"><div class="price-fill" id="price-plan-fill"></div><div class="price-bar-label" id="price-plan-label">0</div></div>
                     </div>
                     <div class="price-per-m2">
                         <div class="price-label">Цена / м² (факт)</div>
-                        <div class="price-value" id="price-fact">0</div>
+                        <div class="price-bar-container" id="price-fact-bar"><div class="price-fill" id="price-fact-fill"></div><div class="price-bar-label" id="price-fact-label">0</div></div>
                     </div>
                 </div>
             </div>
@@ -205,14 +210,60 @@ function renderAnalysis() {
         </div>
     `;
 
-    // Populate area-derived values if inputs already exist
-    setTimeout(() => {
+    // Populate area-derived values if inputs already exist and attach inline editing
+    setTimeout(async () => {
         const areaInput = document.getElementById('obj-area');
         if (areaInput) areaInput.value = analysisData.area || 0;
         const start = document.getElementById('obj-start-date');
         if (start && analysisData.startDate) start.value = analysisData.startDate;
         const end = document.getElementById('obj-end-date');
         if (end && analysisData.endDate) end.value = analysisData.endDate;
+
+        // Load object metadata (name etc.) from server if available
+        if (analysisData.objectId) {
+            try {
+                const res = await fetch(`/objects/${analysisData.objectId}`);
+                if (res.ok) {
+                    const obj = await res.json();
+                    const nameEl = document.getElementById('object-name');
+                    if (nameEl) nameEl.textContent = obj.name || 'Объект';
+                    if (areaInput && (obj.area !== undefined && obj.area !== null)) areaInput.value = obj.area;
+                    if (start && obj.start_date) start.value = obj.start_date;
+                    if (end && obj.end_date) end.value = obj.end_date;
+                    // attach inline edit behaviour for object name (reuse makeEditable from budget.js if present)
+                    const nameElem = document.getElementById('object-name');
+                    if (nameElem) {
+                        if (typeof makeEditable === 'function') {
+                            makeEditable(nameElem, async (newValue) => {
+                                // save to server
+                                await fetch(`/objects/${analysisData.objectId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newValue }) });
+                                // update sidebar item text if selected
+                                const sel = document.querySelector('#object-list li.selected');
+                                if (sel) sel.textContent = newValue;
+                            });
+                        } else {
+                            // fallback simple inline edit
+                            nameElem.onclick = () => {
+                                const cur = nameElem.textContent;
+                                const input = document.createElement('input');
+                                input.type = 'text'; input.value = cur; input.className = 'inline-edit-input';
+                                input.onblur = async () => {
+                                    const nv = input.value.trim() || cur;
+                                    await fetch(`/objects/${analysisData.objectId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: nv }) });
+                                    nameElem.textContent = nv;
+                                    const sel = document.querySelector('#object-list li.selected'); if (sel) sel.textContent = nv;
+                                };
+                                input.onkeydown = (e) => { if (e.key === 'Enter') input.blur(); else if (e.key === 'Escape') { nameElem.textContent = cur; } };
+                                nameElem.textContent = ''; nameElem.appendChild(input); input.focus(); input.select();
+                            };
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('Could not fetch object metadata', err);
+            }
+        }
+
         updatePricePerM2();
     }, 0);
 }
@@ -334,16 +385,37 @@ function onObjectFieldChange() {
     analysisData.startDate = start;
     analysisData.endDate = end;
     updatePricePerM2();
+
+    // Persist these fields to server (partial update)
+    if (analysisData.objectId) {
+        fetch(`/objects/${analysisData.objectId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ startDate: start || null, endDate: end || null, area: area })
+        }).then(res => {
+            if (!res.ok) console.warn('Failed to save object fields');
+        }).catch(err => console.error('Save object fields error', err));
+    }
 }
 
 function updatePricePerM2() {
     const area = parseFloat(analysisData.area || 0) || 0;
-    const planEl = document.getElementById('price-plan');
-    const factEl = document.getElementById('price-fact');
+    const planFill = document.getElementById('price-plan-fill');
+    const factFill = document.getElementById('price-fact-fill');
+    const planLabel = document.getElementById('price-plan-label');
+    const factLabel = document.getElementById('price-fact-label');
     const planPrice = area > 0 ? analysisData.budget / area : 0;
     const factPrice = area > 0 ? analysisData.expense / area : 0;
-    if (planEl) planEl.innerText = formatNum(planPrice) + ' сум';
-    if (factEl) factEl.innerText = formatNum(factPrice) + ' сум';
+
+    // Determine widths by normalizing to the larger of the two
+    const maxVal = Math.max(planPrice, factPrice, 1);
+    const planPct = Math.round((planPrice / maxVal) * 100);
+    const factPct = Math.round((factPrice / maxVal) * 100);
+
+    if (planFill) planFill.style.width = planPct + '%';
+    if (factFill) factFill.style.width = factPct + '%';
+    if (planLabel) planLabel.innerText = formatNum(planPrice) + ' сум';
+    if (factLabel) factLabel.innerText = formatNum(factPrice) + ' сум';
 }
 
 // Simple SVG icon helper (returns small inline svg string)

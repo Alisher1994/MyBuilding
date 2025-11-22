@@ -285,6 +285,11 @@ async def create_tables():
                 name TEXT NOT NULL
             );
         """)
+        # Ensure additional optional columns exist for Analysis metadata
+        # (start_date, end_date, area) - add if missing
+        await connection.execute("ALTER TABLE objects ADD COLUMN IF NOT EXISTS start_date DATE;")
+        await connection.execute("ALTER TABLE objects ADD COLUMN IF NOT EXISTS end_date DATE;")
+        await connection.execute("ALTER TABLE objects ADD COLUMN IF NOT EXISTS area NUMERIC(15,3) DEFAULT 0;")
         
         # Таблица budget_stages (этапы)
         await connection.execute("""
@@ -363,6 +368,22 @@ async def get_objects():
         rows = await connection.fetch(query)
     return [{"id": row["id"], "name": row["name"]} for row in rows]
 
+
+@app.get('/objects/{object_id}')
+async def get_object(object_id: int):
+    query = "SELECT id, name, start_date, end_date, area FROM objects WHERE id=$1;"
+    async with app.state.db.acquire() as connection:
+        row = await connection.fetchrow(query, object_id)
+    if not row:
+        raise HTTPException(status_code=404, detail='Объект не найден')
+    return {
+        'id': row['id'],
+        'name': row['name'],
+        'start_date': row['start_date'].isoformat() if row['start_date'] else None,
+        'end_date': row['end_date'].isoformat() if row['end_date'] else None,
+        'area': float(row['area']) if row['area'] is not None else 0
+    }
+
 @app.post("/objects/")
 async def add_object(data: dict):
     name = data.get("name", "Новый объект")
@@ -372,16 +393,56 @@ async def add_object(data: dict):
     return {"id": row["id"], "name": row["name"]}
 
 @app.put("/objects/{object_id}")
-async def rename_object(object_id: int, data: dict):
-    name = data.get("name", "")
-    if not name:
-        raise HTTPException(status_code=400, detail="Имя не может быть пустым")
-    query = "UPDATE objects SET name=$1 WHERE id=$2 RETURNING id, name;"
+async def update_object(object_id: int, data: dict):
+    # Accepts partial updates: name, startDate, endDate, area
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=400, detail='Invalid payload')
+    fields = []
+    params = []
+    idx = 1
+    # map incoming keys to DB columns
+    if 'name' in data:
+        if not data.get('name'):
+            raise HTTPException(status_code=400, detail='Имя не может быть пустым')
+        fields.append(f"name=${idx}")
+        params.append(data.get('name'))
+        idx += 1
+    if 'startDate' in data or 'start_date' in data:
+        sd = data.get('startDate') or data.get('start_date')
+        fields.append(f"start_date=${idx}")
+        params.append(sd or None)
+        idx += 1
+    if 'endDate' in data or 'end_date' in data:
+        ed = data.get('endDate') or data.get('end_date')
+        fields.append(f"end_date=${idx}")
+        params.append(ed or None)
+        idx += 1
+    if 'area' in data:
+        try:
+            area = float(data.get('area') or 0)
+        except Exception:
+            raise HTTPException(status_code=400, detail='Некорректная площадь')
+        fields.append(f"area=${idx}")
+        params.append(area)
+        idx += 1
+
+    if not fields:
+        raise HTTPException(status_code=400, detail='Нет полей для обновления')
+
+    set_clause = ','.join(fields)
+    query = f"UPDATE objects SET {set_clause} WHERE id=${idx} RETURNING id, name, start_date, end_date, area;"
+    params.append(object_id)
     async with app.state.db.acquire() as connection:
-        row = await connection.fetchrow(query, name, object_id)
+        row = await connection.fetchrow(query, *params)
     if not row:
-        raise HTTPException(status_code=404, detail="Объект не найден")
-    return {"id": row["id"], "name": row["name"]}
+        raise HTTPException(status_code=404, detail='Объект не найден')
+    return {
+        'id': row['id'],
+        'name': row['name'],
+        'start_date': row['start_date'].isoformat() if row['start_date'] else None,
+        'end_date': row['end_date'].isoformat() if row['end_date'] else None,
+        'area': float(row['area']) if row['area'] is not None else 0
+    }
 
 @app.delete("/objects/{object_id}")
 async def delete_object(object_id: int):

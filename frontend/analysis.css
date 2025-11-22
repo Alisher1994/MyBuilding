@@ -35,6 +35,12 @@
     margin-bottom: 20px;
 }
 
+.analysis-object-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px }
+.object-name { font-size:18px; font-weight:700; color:#222; cursor:text }
+.object-quick-params { display:flex; gap:12px; align-items:center }
+.object-quick-params label { font-size:13px; color:#444 }
+.object-quick-params input { margin-top:6px; padding:6px 8px; border:1px solid #ddd; border-radius:4px }
+
 .analysis-object-photos {
     display: flex;
     gap: 12px;
@@ -83,7 +89,12 @@
 .prices-row { justify-content: space-between; align-items:center }
 .price-per-m2 { text-align:center }
 .price-label { font-size:13px; color:#666; margin-bottom:6px }
-.price-value { font-weight:700; color:#000 }
+
+.price-bar-container { position:relative; width:260px; height:28px; background:#f0f0f0; border-radius:6px; overflow:hidden; margin:0 auto }
+.price-fill { position:absolute; left:0; top:0; bottom:0; width:0; background:linear-gradient(90deg,#1976D2 0%, #42A5F5 100%); transition:width .5s ease }
+.price-fill.fact { background: linear-gradient(90deg,#D32F2F 0%, #F44336 100%); }
+#price-fact-fill { background: linear-gradient(90deg,#D32F2F 0%, #F44336 100%); }
+.price-bar-label { position:relative; z-index:2; display:block; width:100%; text-align:center; line-height:28px; font-weight:700; color:#000 }
 
 .export-btn-wrap { display:flex; align-items:center }
 .btn { padding:8px 12px; border-radius:6px; border:1px solid #ccc; background:#fff; cursor:pointer }
