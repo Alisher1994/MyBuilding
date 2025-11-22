@@ -4,6 +4,43 @@ let incomeRows = [];
 let editingIncomeId = null;
 let selectedId = null;
 
+// --- Simple password gate ---
+function showPasswordGate() {
+    // create overlay
+    let overlay = document.createElement('div');
+    overlay.id = 'pw-overlay';
+    overlay.style.position = 'fixed';
+    overlay.style.inset = '0';
+    overlay.style.background = '#000';
+    overlay.style.zIndex = '99999';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.color = '#fff';
+    overlay.style.fontSize = '18px';
+    overlay.style.flexDirection = 'column';
+    overlay.innerHTML = '<div style="text-align:center;max-width:90%;">Доступ ограничен. Введите пароль чтобы продолжить.</div>';
+    document.body.appendChild(overlay);
+
+    // allow overlay to render before prompting
+    setTimeout(() => {
+        const correct = '9503';
+        while (true) {
+            const val = prompt('Введите пароль:');
+            // if user cancelled, keep asking
+            if (val === null) continue;
+            if (val === correct) {
+                // remove overlay and exit
+                const el = document.getElementById('pw-overlay');
+                if (el) el.parentNode.removeChild(el);
+                break;
+            } else {
+                alert('Неправильный пароль');
+            }
+        }
+    }, 0);
+}
+
 // --- Helper: Format Number (1 000 000) ---
 function formatNumber(num) {
     if (num === null || num === undefined) return '';
