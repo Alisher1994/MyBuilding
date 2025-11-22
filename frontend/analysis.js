@@ -160,14 +160,24 @@ function renderAnalysis() {
 
             <div class="analysis-object-params">
                 <div class="object-param-row prices-row">
-                    <div class="price-per-m2">
-                        <div class="price-label">Цена / м² (план)</div>
-                        <div class="price-bar-container" id="price-plan-bar"><div class="price-fill" id="price-plan-fill"></div><div class="price-bar-label" id="price-plan-label">0</div></div>
-                    </div>
-                    <div class="price-per-m2">
-                        <div class="price-label">Цена / м² (факт)</div>
-                        <div class="price-bar-container" id="price-fact-bar"><div class="price-fill" id="price-fact-fill"></div><div class="price-bar-label" id="price-fact-label">0</div></div>
-                    </div>
+                        <div class="price-per-m2">
+                            <div class="analysis-progress-header">
+                                <span class="analysis-progress-label">Цена / м² (план)</span>
+                                <span class="analysis-progress-value" id="price-plan-value">0 сум</span>
+                            </div>
+                            <div class="analysis-progress-bar-container">
+                                <div class="analysis-progress-bar neutral" id="price-plan-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="price-per-m2">
+                            <div class="analysis-progress-header">
+                                <span class="analysis-progress-label">Цена / м² (факт)</span>
+                                <span class="analysis-progress-value" id="price-fact-value">0 сум</span>
+                            </div>
+                            <div class="analysis-progress-bar-container">
+                                <div class="analysis-progress-bar" id="price-fact-bar" style="width:0%"></div>
+                            </div>
+                        </div>
                 </div>
             </div>
         </div>
@@ -400,22 +410,33 @@ function onObjectFieldChange() {
 
 function updatePricePerM2() {
     const area = parseFloat(analysisData.area || 0) || 0;
-    const planFill = document.getElementById('price-plan-fill');
-    const factFill = document.getElementById('price-fact-fill');
-    const planLabel = document.getElementById('price-plan-label');
-    const factLabel = document.getElementById('price-fact-label');
+    const planBar = document.getElementById('price-plan-bar');
+    const factBar = document.getElementById('price-fact-bar');
+    const planValueEl = document.getElementById('price-plan-value');
+    const factValueEl = document.getElementById('price-fact-value');
     const planPrice = area > 0 ? analysisData.budget / area : 0;
     const factPrice = area > 0 ? analysisData.expense / area : 0;
 
-    // Determine widths by normalizing to the larger of the two
+    // Normalize widths relative to the larger value (or 1 to avoid division by zero)
     const maxVal = Math.max(planPrice, factPrice, 1);
-    const planPct = Math.round((planPrice / maxVal) * 100);
-    const factPct = Math.round((factPrice / maxVal) * 100);
+    const planPct = maxVal > 0 ? (planPrice / maxVal) * 100 : 0;
+    const factPct = maxVal > 0 ? (factPrice / maxVal) * 100 : 0;
 
-    if (planFill) planFill.style.width = planPct + '%';
-    if (factFill) factFill.style.width = factPct + '%';
-    if (planLabel) planLabel.innerText = formatNum(planPrice) + ' сум';
-    if (factLabel) factLabel.innerText = formatNum(factPrice) + ' сум';
+    // Set widths and labels
+    if (planBar) {
+        planBar.style.width = planPct + '%';
+        planBar.className = 'analysis-progress-bar neutral';
+        planBar.innerText = planPct > 10 ? formatNum(planPrice) + ' сум' : '';
+    }
+    if (factBar) {
+        factBar.style.width = factPct + '%';
+        // Choose class depending on whether fact > plan
+        const factClass = factPrice > planPrice ? 'negative' : 'positive';
+        factBar.className = 'analysis-progress-bar ' + factClass;
+        factBar.innerText = factPct > 10 ? formatNum(factPrice) + ' сум' : '';
+    }
+    if (planValueEl) planValueEl.innerText = formatNum(planPrice) + ' сум';
+    if (factValueEl) factValueEl.innerText = formatNum(factPrice) + ' сум';
 }
 
 // Simple SVG icon helper (returns small inline svg string)
