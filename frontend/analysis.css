@@ -366,6 +366,114 @@
 .analysis-collapsible.collapsed .analysis-collapsible-body { display:none }
 .analysis-collapsible.collapsed .analysis-collapsible-header .collapser { transform: none }
 
+/* Work Types Plan/Fact Comparison */
+.work-types-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 16px;
+}
+
+.work-type-item {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.work-type-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.work-type-stage {
+    display: block;
+    font-size: 11px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.work-type-name {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #222;
+}
+
+.work-type-comparison {
+    margin-bottom: 12px;
+}
+
+.work-type-bar-group {
+    display: grid;
+    grid-template-columns: 50px 1fr 120px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.work-type-bar-label {
+    font-size: 13px;
+    color: #555;
+    font-weight: 500;
+}
+
+.work-type-bar-container {
+    background: #f5f5f5;
+    border-radius: 4px;
+    height: 24px;
+    overflow: hidden;
+    position: relative;
+}
+
+.work-type-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+.work-type-bar.plan {
+    background: linear-gradient(90deg, #42A5F5, #1E88E5);
+}
+
+.work-type-bar.fact {
+    background: linear-gradient(90deg, #FF7043, #E64A19);
+}
+
+.work-type-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    text-align: right;
+}
+
+.work-type-diff {
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.work-type-diff.positive {
+    background: #e8f5e9;
+    color: #4CAF50;
+}
+
+.work-type-diff.negative {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.no-data {
+    padding: 40px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
     .analysis-cards-grid {
@@ -374,6 +482,15 @@
 
     .analysis-resources-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .work-types-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .work-type-bar-group {
+        grid-template-columns: 45px 1fr 100px;
+        gap: 6px;
     }
 }
 

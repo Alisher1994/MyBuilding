@@ -251,6 +251,7 @@ async def export_analysis_pdf(request: Request):
 async def update_income(object_id: int, income_id: int, date: str = Form(...), amount: float = Form(...), sender: str = Form(...), receiver: str = Form(...), comment: str = Form(""), photo: UploadFile = File(None)):
     try:
         print(f"Updating income {income_id} for object {object_id}. Photo: {photo.filename if photo else 'None'}")
+        from datetime import date as dtdateclass
         # Получаем старую запись для удаления старого фото, если нужно
         old_photo = None
         async with app.state.db.acquire() as connection:
@@ -269,13 +270,18 @@ async def update_income(object_id: int, income_id: int, date: str = Form(...), a
             photo_path = f"/uploads/{fname}"
             print(f"Saved upload (update): {dest} -> {photo_path}")
             # optionally: remove old file
+        # Parse date string to date object
+        try:
+            date_obj = dtdateclass.fromisoformat(date)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Некорректный формат даты (ожидается YYYY-MM-DD)")
         query = """
             UPDATE incomes SET date=$1, photo=$2, amount=$3, sender=$4, receiver=$5, comment=$6
             WHERE id=$7 AND object_id=$8
             RETURNING id, date, photo, amount, sender, receiver, comment;
         """
         async with app.state.db.acquire() as connection:
-            row = await connection.fetchrow(query, date, photo_path, amount, sender, receiver, comment, income_id, object_id)
+            row = await connection.fetchrow(query, date_obj, photo_path, amount, sender, receiver, comment, income_id, object_id)
         if not row:
             raise HTTPException(status_code=404, detail="Строка не найдена")
         return {
@@ -385,6 +391,16 @@ async def create_tables():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
+        
+        # Таблица для share токенов (постоянные ссылки на объекты)
+        await connection.execute("""
+            CREATE TABLE IF NOT EXISTS share_tokens (
+                id SERIAL PRIMARY KEY,
+                object_id INTEGER NOT NULL REFERENCES objects(id) ON DELETE CASCADE,
+                token TEXT UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
 
 @app.on_event("shutdown")
 async def shutdown():
@@ -482,8 +498,161 @@ async def delete_object(object_id: int):
         raise HTTPException(status_code=404, detail="Объект не найден")
     return {"status": "deleted"}
 
+# === Share Token Endpoints ===
+@app.post("/objects/{object_id}/share")
+async def generate_share_token(object_id: int):
+    """Generate or retrieve permanent share token for readonly access to object."""
+    import secrets
+    try:
+        async with app.state.db.acquire() as conn:
+            # Check if token already exists
+            existing = await conn.fetchrow("SELECT token FROM share_tokens WHERE object_id=$1", object_id)
+            if existing:
+                return {"token": existing["token"], "url": f"/share/{existing['token']}"}
+            # Generate new token
+            token = secrets.token_urlsafe(16)
+            await conn.execute("INSERT INTO share_tokens (object_id, token) VALUES ($1, $2)", object_id, token)
+            return {"token": token, "url": f"/share/{token}"}
+    except Exception as e:
+        print(f"Error generating share token: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/share/{token}", response_class=HTMLResponse)
+async def share_view(token: str):
+    """Readonly view of shared object - serves static HTML with embedded data."""
+    try:
+        async with app.state.db.acquire() as conn:
+            share = await conn.fetchrow("SELECT object_id FROM share_tokens WHERE token=$1", token)
+            if not share:
+                return HTMLResponse("<h1>Ссылка не найдена</h1>", status_code=404)
+            object_id = share["object_id"]
+            
+            # Fetch object info
+            obj = await conn.fetchrow("SELECT id, name FROM objects WHERE id=$1", object_id)
+            if not obj:
+                return HTMLResponse("<h1>Объект не найден</h1>", status_code=404)
+            
+        # Return minimal HTML that loads app in readonly mode
+        html = f"""<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{obj['name']} - Просмотр</title>
+    <link rel="stylesheet" href="/frontend/style.css">
+    <link rel="stylesheet" href="/frontend/budget.css">
+    <link rel="stylesheet" href="/frontend/expense.css">
+    <link rel="stylesheet" href="/frontend/analysis.css">
+    <style>
+        /* Hide edit controls in readonly mode */
+        .readonly-mode .icon-btn,
+        .readonly-mode #object-actions,
+        .readonly-mode #add-object,
+        .readonly-mode .btn-add,
+        .readonly-mode .btn-delete,
+        .readonly-mode .btn-icon,
+        .readonly-mode .editable,
+        .readonly-mode .editable-select,
+        .readonly-mode input[type="file"],
+        .readonly-mode .modal,
+        .readonly-mode .sidebar {{
+            display: none !important;
+        }}
+        .readonly-mode .main-content {{
+            margin-left: 0 !important;
+        }}
+        .readonly-banner {{
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 12px 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #856404;
+        }}
+    </style>
+</head>
+<body class="readonly-mode">
+    <div class="readonly-banner">📋 Режим просмотра - {obj['name']}</div>
+    <div class="main-content">
+        <div id="tabs-actions-row" style="display:flex;">
+            <div id="tabs" style="margin-top:30px;">
+                <div class="tabs-header">
+                    <button class="tab-btn active" data-tab="analysis">Анализ</button>
+                    <button class="tab-btn" data-tab="income">Приход</button>
+                    <button class="tab-btn" data-tab="budget">Бюджет</button>
+                    <button class="tab-btn" data-tab="expense">Расход</button>
+                </div>
+            </div>
+        </div>
+        <div id="tab-analysis" class="tab-content"><div id="analysis-container"></div></div>
+        <div id="tab-income" class="tab-content" style="display:none;">
+            <div class="income-table-wrap">
+                <table class="income-table">
+                    <thead><tr><th>№</th><th>Дата</th><th>Фото</th><th>Сумма</th><th>Кто передал</th><th>Кто получил</th><th>Комментарии</th></tr></thead>
+                    <tbody id="income-tbody"></tbody>
+                    <tfoot><tr><td colspan="3" style="text-align:right;font-weight:600;">Итого:</td><td id="income-total" style="font-weight:600;">0</td><td colspan="3"></td></tr></tfoot>
+                </table>
+            </div>
+        </div>
+        <div id="tab-budget" class="tab-content" style="display:none;"><div id="budget-container"></div></div>
+        <div id="tab-expense" class="tab-content" style="display:none;"><div id="expense-container"></div></div>
+    </div>
+    <script>
+        const READONLY_MODE = true;
+        const SHARED_OBJECT_ID = {object_id};
+        let selectedId = {object_id};
+    </script>
+    <script src="/frontend/app.js"></script>
+    <script src="/frontend/budget.js"></script>
+    <script src="/frontend/expense.js"></script>
+    <script src="/frontend/analysis.js"></script>
+    <script>
+        // Auto-load data for shared object
+        document.addEventListener('DOMContentLoaded', () => {{
+            if (window.loadAnalysis) window.loadAnalysis({object_id});
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {{
+                btn.onclick = () => {{
+                    const tab = btn.dataset.tab;
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(div => div.style.display = 'none');
+                    document.getElementById('tab-' + tab).style.display = '';
+                    
+                    if (tab === 'income' && window.loadIncomes) {{
+                        // Load incomes manually
+                        fetch(`/objects/{object_id}/incomes/`).then(r => r.json()).then(data => {{
+                            window.incomeRows = data;
+                            const tbody = document.getElementById('income-tbody');
+                            tbody.innerHTML = '';
+                            let total = 0;
+                            data.forEach((row, idx) => {{
+                                const tr = document.createElement('tr');
+                                const photoHtml = row.photo ? `<img src="${{row.photo}}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" alt="Фото">` : '';
+                                tr.innerHTML = `<td>${{idx + 1}}</td><td>${{row.date}}</td><td>${{photoHtml}}</td><td>${{row.amount.toLocaleString()}}</td><td>${{row.sender}}</td><td>${{row.receiver}}</td><td>${{row.comment}}</td>`;
+                                tbody.appendChild(tr);
+                                total += row.amount;
+                            }});
+                            document.getElementById('income-total').textContent = total.toLocaleString();
+                        }});
+                    }} else if (tab === 'budget' && window.loadBudget) {{
+                        window.loadBudget({object_id});
+                    }} else if (tab === 'expense' && window.loadExpenses) {{
+                        window.loadExpenses({object_id});
+                    }}
+                }};
+            }});
+        }});
+    </script>
+</body>
+</html>"""
+        return HTMLResponse(html)
+    except Exception as e:
+        print(f"Error in share_view: {e}")
+        return HTMLResponse(f"<h1>Ошибка: {str(e)}</h1>", status_code=500)
+
 @app.get("/")
-def root_redirect():
+async def root_redirect():
     return RedirectResponse(url="/frontend/index.html")
 
 # === Budget API ===

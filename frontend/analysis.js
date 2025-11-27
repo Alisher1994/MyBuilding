@@ -6,12 +6,14 @@ let analysisData = {
     expense: 0,
     balance: 0,
     overrun: 0,
-    resources: {}
+    resources: {},
+    workTypes: []
 };
 // Collapsed state for sections: true = collapsed
 analysisData.collapsedSections = {
     cards: true,
     progress: true,
+    workTypes: true,
     resources: true
 };
 
@@ -83,6 +85,43 @@ function calculateAnalysis(budgetData, incomeData, expenseData) {
 
     // По типам ресурсов
     analysisData.resources = calculateResourcesByType(budgetData, expenseData);
+    
+    // По видам работ (план/факт)
+    analysisData.workTypes = calculateWorkTypes(budgetData, expenseData);
+}
+
+// Расчет по видам работ
+function calculateWorkTypes(budgetData, expenseData) {
+    const workTypes = [];
+    
+    budgetData.forEach((stage, stageIdx) => {
+        (stage.work_types || []).forEach((wt, wtIdx) => {
+            const plan = (wt.resources || []).reduce((sum, res) => 
+                sum + ((res.quantity || 0) * (res.price || 0)), 0);
+            
+            // Find matching work type in expense data
+            let fact = 0;
+            if (expenseData[stageIdx] && expenseData[stageIdx].work_types) {
+                const expWt = expenseData[stageIdx].work_types[wtIdx];
+                if (expWt && expWt.resources) {
+                    fact = expWt.resources.reduce((sum, res) => {
+                        if (!res.expenses) return sum;
+                        return sum + res.expenses.reduce((s, e) => 
+                            s + ((e.actual_quantity || 0) * (e.actual_price || 0)), 0);
+                    }, 0);
+                }
+            }
+            
+            workTypes.push({
+                stageName: stage.name,
+                name: wt.name,
+                plan: plan,
+                fact: fact
+            });
+        });
+    });
+    
+    return workTypes;
 }
 
 // Расчет общей суммы бюджета
@@ -243,6 +282,17 @@ function renderAnalysis() {
             </div>
             <div class="analysis-collapsible-body">
                 ${renderProgressBars()}
+            </div>
+        </div>
+
+        <!-- План/Факт по видам работ (collapsible) -->
+        <div class="analysis-collapsible ${analysisData.collapsedSections.workTypes ? 'collapsed' : ''}" data-section="workTypes">
+            <div class="analysis-collapsible-header" onclick="toggleAnalysisSection('workTypes')">
+                <span class="analysis-section-title">План/Факт по видам работ</span>
+                <button class="collapser">${analysisData.collapsedSections.workTypes ? '+' : '−'}</button>
+            </div>
+            <div class="analysis-collapsible-body">
+                ${renderWorkTypesComparison()}
             </div>
         </div>
 
@@ -1061,6 +1111,54 @@ function renderProgressBars() {
             </div>
         `;
     }).join('');
+}
+
+// Рендеринг План/Факт по видам работ
+function renderWorkTypesComparison() {
+    if (!analysisData.workTypes || analysisData.workTypes.length === 0) {
+        return '<div class="no-data">Нет данных по видам работ</div>';
+    }
+    
+    let html = '<div class="work-types-grid">';
+    
+    analysisData.workTypes.forEach(wt => {
+        const diff = wt.fact - wt.plan;
+        const diffClass = diff >= 0 ? 'negative' : 'positive';
+        const maxValue = Math.max(wt.plan, wt.fact, 1);
+        const planPercent = (wt.plan / maxValue) * 100;
+        const factPercent = (wt.fact / maxValue) * 100;
+        
+        html += `
+            <div class="work-type-item">
+                <div class="work-type-header">
+                    <span class="work-type-stage">${wt.stageName}</span>
+                    <span class="work-type-name">${wt.name}</span>
+                </div>
+                <div class="work-type-comparison">
+                    <div class="work-type-bar-group">
+                        <div class="work-type-bar-label">План</div>
+                        <div class="work-type-bar-container">
+                            <div class="work-type-bar plan" style="width: ${planPercent}%"></div>
+                        </div>
+                        <div class="work-type-value">${formatNum(wt.plan)} сум</div>
+                    </div>
+                    <div class="work-type-bar-group">
+                        <div class="work-type-bar-label">Факт</div>
+                        <div class="work-type-bar-container">
+                            <div class="work-type-bar fact" style="width: ${factPercent}%"></div>
+                        </div>
+                        <div class="work-type-value">${formatNum(wt.fact)} сум</div>
+                    </div>
+                </div>
+                <div class="work-type-diff ${diffClass}">
+                    ${diff >= 0 ? 'Перерасход' : 'Экономия'}: ${formatNum(Math.abs(diff))} сум
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    return html;
 }
 
 // Рендеринг колонок по типам ресурсов
