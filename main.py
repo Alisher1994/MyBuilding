@@ -547,9 +547,12 @@ async def share_view(token: str):
         /* Complete readonly mode - disable all editing */
         body {{
             pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
         }}
         
-        /* Hide all edit controls */
+        /* Hide all edit controls and sidebar completely */
         .icon-btn,
         #object-actions,
         #add-object,
@@ -559,13 +562,15 @@ async def share_view(token: str):
         input[type="file"],
         .modal,
         .sidebar,
+        .sidebar-close,
+        .sidebar-toggle,
         .collapse-btn,
         .income-edit,
         .income-delete,
         .photo-overlay,
-        .sidebar-toggle,
         .tab-actions {{
             display: none !important;
+            visibility: hidden !important;
         }}
         
         /* Disable editing on all text elements */
@@ -608,9 +613,19 @@ async def share_view(token: str):
             cursor: default !important;
         }}
         
+        /* Ensure main content takes full width without sidebar */
         .main-content {{
             margin-left: 0 !important;
             width: 100% !important;
+            max-width: 100% !important;
+            flex: 1;
+        }}
+        
+        /* Center content container */
+        .tab-content {{
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
         }}
         
         .readonly-banner {{
