@@ -427,6 +427,27 @@ document.getElementById('rename-btn').onclick = async () => {
     renderList();
 };
 
+document.getElementById('share-btn').onclick = async () => {
+    if (!selectedId) return;
+    try {
+        const res = await fetch(`/objects/${selectedId}/share`, { method: 'POST' });
+        if (!res.ok) throw new Error('Ошибка создания ссылки');
+        const data = await res.json();
+        const shareUrl = `${window.location.origin}/share/${data.token}`;
+        
+        // Копируем в буфер обмена
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            alert(`Ссылка скопирована в буфер обмена:\n${shareUrl}`);
+        } catch (e) {
+            // Fallback если clipboard API не работает
+            prompt('Скопируйте ссылку:', shareUrl);
+        }
+    } catch (err) {
+        alert('Ошибка: ' + err.message);
+    }
+};
+
 document.getElementById('delete-btn').onclick = async () => {
     if (!selectedId) return;
     if (!confirm('Удалить объект?')) return;

@@ -12,7 +12,8 @@ let analysisData = {
 analysisData.collapsedSections = {
     cards: true,
     progress: true,
-    resources: true
+    resources: true,
+    workTypes: true
 };
 
 // Icons for resource types in Analysis (black stroke)
@@ -83,6 +84,9 @@ function calculateAnalysis(budgetData, incomeData, expenseData) {
 
     // По типам ресурсов
     analysisData.resources = calculateResourcesByType(budgetData, expenseData);
+    
+    // План/Факт по видам работ
+    analysisData.workTypesPlanFact = calculateWorkTypesPlanFact(budgetData, expenseData);
 }
 
 // Расчет общей суммы бюджета
@@ -153,6 +157,55 @@ function calculateResourcesByType(budgetData, expenseData) {
     });
 
     return resources;
+}
+
+// Расчет План/Факт по видам работ
+function calculateWorkTypesPlanFact(budgetData, expenseData) {
+    const workTypes = [];
+    
+    // Создаём карту расходов по видам работ для быстрого доступа
+    const expenseMap = new Map();
+    expenseData.forEach(stage => {
+        (stage.work_types || []).forEach(wt => {
+            let totalExpense = 0;
+            (wt.resources || []).forEach(res => {
+                if (res.expenses) {
+                    res.expenses.forEach(exp => {
+                        totalExpense += (exp.actual_quantity || 0) * (exp.actual_price || 0);
+                    });
+                }
+            });
+            if (totalExpense > 0 || wt.id) {
+                expenseMap.set(wt.id, totalExpense);
+            }
+        });
+    });
+    
+    // Проходим по бюджету и собираем виды работ с планом и фактом
+    budgetData.forEach(stage => {
+        (stage.work_types || []).forEach(wt => {
+            // Считаем плановую стоимость
+            let planCost = 0;
+            (wt.resources || []).forEach(res => {
+                planCost += (res.quantity || 0) * (res.price || 0);
+            });
+            
+            // Получаем фактическую стоимость
+            const factCost = expenseMap.get(wt.id) || 0;
+            
+            // Добавляем только если есть плановая стоимость или факт
+            if (planCost > 0 || factCost > 0) {
+                workTypes.push({
+                    stageName: stage.name,
+                    name: wt.name,
+                    plan: planCost,
+                    fact: factCost
+                });
+            }
+        });
+    });
+    
+    return workTypes;
 }
 
 // Рендеринг анализа
@@ -258,6 +311,17 @@ function renderAnalysis() {
                         ${renderResourceColumns()}
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- План/Факт по видам работ (collapsible) -->
+        <div class="analysis-collapsible ${analysisData.collapsedSections.workTypes ? 'collapsed' : ''}" data-section="workTypes">
+            <div class="analysis-collapsible-header" onclick="toggleAnalysisSection('workTypes')">
+                <span class="analysis-section-title">План/Факт по видам работ</span>
+                <button class="collapser">${analysisData.collapsedSections.workTypes ? '+' : '−'}</button>
+            </div>
+            <div class="analysis-collapsible-body">
+                ${renderWorkTypesPlanFact()}
             </div>
         </div>
     `;
@@ -1113,6 +1177,56 @@ function renderResourceColumns() {
                 </div>
             `;
     }).join('');
+}
+
+// Рендеринг таблицы План/Факт по видам работ
+function renderWorkTypesPlanFact() {
+    if (!analysisData.workTypesPlanFact || analysisData.workTypesPlanFact.length === 0) {
+        return '<p style="text-align: center; padding: 20px; color: #999;">Нет данных для отображения</p>';
+    }
+    
+    let currentStage = '';
+    let rows = '';
+    
+    analysisData.workTypesPlanFact.forEach(wt => {
+        // Добавляем заголовок этапа, если он изменился
+        if (wt.stageName !== currentStage) {
+            currentStage = wt.stageName;
+            rows += `
+                <tr class="work-type-stage-header">
+                    <td colspan="3"><strong>${currentStage}</strong></td>
+                </tr>
+            `;
+        }
+        
+        const diff = wt.fact - wt.plan;
+        const diffClass = diff > 0 ? 'negative' : (diff < 0 ? 'positive' : '');
+        
+        rows += `
+            <tr>
+                <td>${wt.name}</td>
+                <td class="text-right">${formatNum(wt.plan)} сум</td>
+                <td class="text-right ${diffClass}">${formatNum(wt.fact)} сум</td>
+            </tr>
+        `;
+    });
+    
+    return `
+        <div class="work-types-table-wrapper">
+            <table class="work-types-table">
+                <thead>
+                    <tr>
+                        <th>Вид работ</th>
+                        <th class="text-right">План (сум)</th>
+                        <th class="text-right">Факт (сум)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 // Форматирование чисел

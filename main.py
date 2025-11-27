@@ -251,6 +251,12 @@ async def export_analysis_pdf(request: Request):
 async def update_income(object_id: int, income_id: int, date: str = Form(...), amount: float = Form(...), sender: str = Form(...), receiver: str = Form(...), comment: str = Form(""), photo: UploadFile = File(None)):
     try:
         print(f"Updating income {income_id} for object {object_id}. Photo: {photo.filename if photo else 'None'}")
+        # Преобразуем строку date в объект datetime.date
+        from datetime import date as dtdateclass
+        try:
+            date_obj = dtdateclass.fromisoformat(date)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Неверный формат даты")
         # Получаем старую запись для удаления старого фото, если нужно
         old_photo = None
         async with app.state.db.acquire() as connection:
@@ -275,7 +281,7 @@ async def update_income(object_id: int, income_id: int, date: str = Form(...), a
             RETURNING id, date, photo, amount, sender, receiver, comment;
         """
         async with app.state.db.acquire() as connection:
-            row = await connection.fetchrow(query, date, photo_path, amount, sender, receiver, comment, income_id, object_id)
+            row = await connection.fetchrow(query, date_obj, photo_path, amount, sender, receiver, comment, income_id, object_id)
         if not row:
             raise HTTPException(status_code=404, detail="Строка не найдена")
         return {
@@ -386,6 +392,16 @@ async def create_tables():
             );
         """)
 
+        # Таблица для публичных ссылок (share tokens)
+        await connection.execute("""
+            CREATE TABLE IF NOT EXISTS share_tokens (
+                id SERIAL PRIMARY KEY,
+                object_id INTEGER NOT NULL REFERENCES objects(id) ON DELETE CASCADE,
+                token TEXT NOT NULL UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
 @app.on_event("shutdown")
 async def shutdown():
     await app.state.db.close()
@@ -482,7 +498,198 @@ async def delete_object(object_id: int):
         raise HTTPException(status_code=404, detail="Объект не найден")
     return {"status": "deleted"}
 
+# === API для публичного доступа (share) ===
+import secrets
+
+@app.post("/objects/{object_id}/share")
+async def create_share_token(object_id: int):
+    """Создаёт или возвращает существующий токен для публичного доступа к объекту"""
+    async with app.state.db.acquire() as connection:
+        # Проверяем, существует ли объект
+        obj = await connection.fetchrow("SELECT id FROM objects WHERE id=$1", object_id)
+        if not obj:
+            raise HTTPException(status_code=404, detail="Объект не найден")
+        
+        # Проверяем, есть ли уже токен
+        existing = await connection.fetchrow("SELECT token FROM share_tokens WHERE object_id=$1", object_id)
+        if existing:
+            return {"token": existing["token"]}
+        
+        # Создаём новый токен
+        token = secrets.token_urlsafe(16)
+        await connection.execute("INSERT INTO share_tokens (object_id, token) VALUES ($1, $2)", object_id, token)
+        return {"token": token}
+
+@app.get("/share/{token}")
+async def get_shared_object_html(token: str):
+    """Возвращает HTML страницу для публичного просмотра объекта"""
+    async with app.state.db.acquire() as connection:
+        row = await connection.fetchrow("SELECT object_id FROM share_tokens WHERE token=$1", token)
+        if not row:
+            raise HTTPException(status_code=404, detail="Ссылка не найдена")
+        
+        object_id = row["object_id"]
+        
+    # Возвращаем HTML страницу
+    return HTMLResponse(f"""
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Общий доступ к объекту</title>
+    <link rel="stylesheet" href="/frontend/style.css">
+    <link rel="stylesheet" href="/frontend/budget.css">
+    <link rel="stylesheet" href="/frontend/expense.css">
+    <link rel="stylesheet" href="/frontend/analysis.css">
+    <style>
+        body {{ margin: 20px; background: #f5f5f5; }}
+        .read-only-banner {{ background: #ffc107; color: #000; padding: 10px; text-align: center; font-weight: bold; }}
+        .main-content {{ max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }}
+    </style>
+</head>
+<body>
+    <div class="read-only-banner">📋 Режим просмотра (редактирование недоступно)</div>
+    <div class="main-content">
+        <div id="tabs" style="margin-top:30px;">
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="analysis">Анализ</button>
+                <button class="tab-btn" data-tab="income">Приход</button>
+                <button class="tab-btn" data-tab="budget">Бюджет</button>
+                <button class="tab-btn" data-tab="expense">Расход</button>
+            </div>
+        </div>
+        <div id="tab-analysis" class="tab-content">
+            <div id="analysis-container"></div>
+        </div>
+        <div id="tab-income" class="tab-content" style="display:none;">
+            <div class="income-table-wrap">
+                <table class="income-table">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Дата</th>
+                            <th>Фото</th>
+                            <th>Сумма (в сумах)</th>
+                            <th>Кто передал</th>
+                            <th>Кто получил</th>
+                            <th>Комментарии</th>
+                        </tr>
+                    </thead>
+                    <tbody id="income-tbody"></tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align:right;font-weight:600;">Итого:</td>
+                            <td id="income-total" style="font-weight:600;">0</td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <div id="tab-budget" class="tab-content" style="display:none;">
+            <div id="budget-container"></div>
+        </div>
+        <div id="tab-expense" class="tab-content" style="display:none;">
+            <div id="expense-container"></div>
+        </div>
+    </div>
+    <script>
+        const OBJECT_ID = {object_id};
+        const READ_ONLY = true;
+        
+        function formatNumber(num) {{
+            if (num === null || num === undefined) return '';
+            return num.toString().replace(/\\B(?=(\\d{{3}})+(?!\\d))/g, " ");
+        }}
+        
+        function setActiveTab(tab) {{
+            document.querySelectorAll('.tab-btn').forEach(btn => {{
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            }});
+            document.querySelectorAll('.tab-content').forEach(div => {{
+                div.style.display = div.id === 'tab-' + tab ? '' : 'none';
+            }});
+            
+            if (tab === 'income') loadIncomes();
+            if (tab === 'budget') loadBudget();
+            if (tab === 'expense') loadExpenses();
+            if (tab === 'analysis') loadAnalysis();
+        }}
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {{
+            btn.onclick = () => setActiveTab(btn.dataset.tab);
+        }});
+        
+        async function loadIncomes() {{
+            const res = await fetch(`/objects/${{OBJECT_ID}}/incomes/`);
+            const rows = await res.json();
+            const tbody = document.getElementById('income-tbody');
+            tbody.innerHTML = '';
+            let total = 0;
+            rows.forEach((row, idx) => {{
+                const photoHtml = row.photo 
+                    ? `<img src="${{row.photo}}" style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;" onclick="showPhoto('${{row.photo}}')">`
+                    : '<span style="color: #ccc;">—</span>';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${{idx + 1}}</td>
+                    <td>${{row.date}}</td>
+                    <td>${{photoHtml}}</td>
+                    <td class="text-right">${{formatNumber(row.amount)}}</td>
+                    <td>${{row.sender || ''}}</td>
+                    <td>${{row.receiver || ''}}</td>
+                    <td>${{row.comment || ''}}</td>
+                `;
+                tbody.appendChild(tr);
+                total += Number(row.amount) || 0;
+            }});
+            document.getElementById('income-total').textContent = formatNumber(total);
+        }}
+        
+        async function loadBudget() {{
+            const res = await fetch(`/objects/${{OBJECT_ID}}/budget/stages`);
+            const stages = await res.json();
+            const container = document.getElementById('budget-container');
+            container.innerHTML = '<h3>Бюджет (только просмотр)</h3>';
+            for (const stage of stages) {{
+                container.innerHTML += `<div style="margin: 10px 0;"><strong>${{stage.name}}</strong></div>`;
+                for (const wt of stage.work_types || []) {{
+                    container.innerHTML += `<div style="margin-left: 20px;">${{wt.name}} - ${{wt.quantity}} ${{wt.unit}}</div>`;
+                }}
+            }}
+        }}
+        
+        async function loadExpenses() {{
+            const container = document.getElementById('expense-container');
+            container.innerHTML = '<h3>Расходы (только просмотр)</h3><p>Данные загружаются...</p>';
+        }}
+        
+        async function loadAnalysis() {{
+            const res = await fetch(`/objects/${{OBJECT_ID}}/analysis`);
+            const data = await res.json();
+            const container = document.getElementById('analysis-container');
+            container.innerHTML = `
+                <h3>Анализ объекта</h3>
+                <p><strong>Общий приход:</strong> ${{formatNumber(data.total_income || 0)}} сум</p>
+                <p><strong>Общий расход:</strong> ${{formatNumber(data.total_expense || 0)}} сум</p>
+                <p><strong>Остаток:</strong> ${{formatNumber((data.total_income || 0) - (data.total_expense || 0))}} сум</p>
+            `;
+        }}
+        
+        function showPhoto(src) {{
+            window.open(src, '_blank');
+        }}
+        
+        // Загрузка при открытии
+        loadAnalysis();
+    </script>
+</body>
+</html>
+    """)
+
 @app.get("/")
+
 def root_redirect():
     return RedirectResponse(url="/frontend/index.html")
 
