@@ -532,7 +532,7 @@ async def share_view(token: str):
             if not obj:
                 return HTMLResponse("<h1>Объект не найден</h1>", status_code=404)
             
-        # Return minimal HTML that loads app in readonly mode
+        # Return minimal HTML that loads app in readonly mode with disabled editing
         html = f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -544,37 +544,96 @@ async def share_view(token: str):
     <link rel="stylesheet" href="/frontend/expense.css">
     <link rel="stylesheet" href="/frontend/analysis.css">
     <style>
-        /* Hide edit controls in readonly mode */
-        .readonly-mode .icon-btn,
-        .readonly-mode #object-actions,
-        .readonly-mode #add-object,
-        .readonly-mode .btn-add,
-        .readonly-mode .btn-delete,
-        .readonly-mode .btn-icon,
-        .readonly-mode .editable,
-        .readonly-mode .editable-select,
-        .readonly-mode input[type="file"],
-        .readonly-mode .modal,
-        .readonly-mode .sidebar {{
+        /* Complete readonly mode - disable all editing */
+        body {{
+            pointer-events: auto;
+        }}
+        
+        /* Hide all edit controls */
+        .icon-btn,
+        #object-actions,
+        #add-object,
+        .btn-add,
+        .btn-delete,
+        .btn-icon,
+        input[type="file"],
+        .modal,
+        .sidebar,
+        .collapse-btn,
+        .income-edit,
+        .income-delete,
+        .photo-overlay,
+        .sidebar-toggle,
+        .tab-actions {{
             display: none !important;
         }}
-        .readonly-mode .main-content {{
-            margin-left: 0 !important;
+        
+        /* Disable editing on all text elements */
+        .editable,
+        .editable-select,
+        .stage-name,
+        .wt-name,
+        .wt-unit,
+        .wt-quantity,
+        .res-name,
+        .res-type,
+        .res-unit,
+        .res-quantity,
+        .res-price,
+        .res-supplier,
+        .object-name {{
+            cursor: default !important;
+            pointer-events: none !important;
+            user-select: text !important;
         }}
+        
+        /* Disable hover effects */
+        .editable:hover,
+        .editable-select:hover,
+        .stage-name:hover,
+        .wt-name:hover,
+        .res-name:hover {{
+            background: transparent !important;
+        }}
+        
+        /* Make inputs readonly visually */
+        input[type="number"],
+        input[type="date"],
+        input[type="text"],
+        textarea,
+        select {{
+            pointer-events: none !important;
+            background: #f9f9f9 !important;
+            border-color: #e0e0e0 !important;
+            cursor: default !important;
+        }}
+        
+        .main-content {{
+            margin-left: 0 !important;
+            width: 100% !important;
+        }}
+        
         .readonly-banner {{
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 16px 20px;
             text-align: center;
             font-weight: 600;
-            color: #856404;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 16px;
+        }}
+        
+        #tabs-actions-row {{
+            padding: 0 24px;
+            height: 60px;
         }}
     </style>
 </head>
-<body class="readonly-mode">
-    <div class="readonly-banner">📋 Режим просмотра - {obj['name']}</div>
+<body>
+    <div class="readonly-banner">🔒 Режим просмотра — {obj['name']}</div>
     <div class="main-content">
-        <div id="tabs-actions-row" style="display:flex;">
+        <div id="tabs-actions-row" style="display:flex; align-items:center;">
             <div id="tabs" style="margin-top:30px;">
                 <div class="tabs-header">
                     <button class="tab-btn active" data-tab="analysis">Анализ</button>
@@ -601,6 +660,23 @@ async def share_view(token: str):
         const READONLY_MODE = true;
         const SHARED_OBJECT_ID = {object_id};
         let selectedId = {object_id};
+        
+        // Disable all click events on editable elements
+        document.addEventListener('click', function(e) {{
+            if (e.target.classList.contains('editable') || 
+                e.target.classList.contains('editable-select') ||
+                e.target.classList.contains('stage-name') ||
+                e.target.classList.contains('wt-name') ||
+                e.target.classList.contains('res-name')) {{
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }}
+        }}, true);
+        
+        // Override inline editing functions
+        window.enableInlineEdit = function() {{ return false; }};
+        window.saveInlineEdit = function() {{ return false; }};
     </script>
     <script src="/frontend/app.js"></script>
     <script src="/frontend/budget.js"></script>
@@ -619,10 +695,8 @@ async def share_view(token: str):
                     document.querySelectorAll('.tab-content').forEach(div => div.style.display = 'none');
                     document.getElementById('tab-' + tab).style.display = '';
                     
-                    if (tab === 'income' && window.loadIncomes) {{
-                        // Load incomes manually
+                    if (tab === 'income') {{
                         fetch(`/objects/{object_id}/incomes/`).then(r => r.json()).then(data => {{
-                            window.incomeRows = data;
                             const tbody = document.getElementById('income-tbody');
                             tbody.innerHTML = '';
                             let total = 0;
@@ -642,6 +716,15 @@ async def share_view(token: str):
                     }}
                 }};
             }});
+            
+            // Disable all inputs after page loads
+            setTimeout(() => {{
+                document.querySelectorAll('input, textarea, select').forEach(el => {{
+                    el.setAttribute('readonly', 'readonly');
+                    el.setAttribute('disabled', 'disabled');
+                    el.style.pointerEvents = 'none';
+                }});
+            }}, 500);
         }});
     </script>
 </body>
