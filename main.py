@@ -648,33 +648,170 @@ async def get_shared_object_html(token: str):
         }}
         
         async function loadBudget() {{
-            const res = await fetch(`/objects/${{OBJECT_ID}}/budget/stages`);
-            const stages = await res.json();
-            const container = document.getElementById('budget-container');
-            container.innerHTML = '<h3>Бюджет (только просмотр)</h3>';
-            for (const stage of stages) {{
-                container.innerHTML += `<div style="margin: 10px 0;"><strong>${{stage.name}}</strong></div>`;
-                for (const wt of stage.work_types || []) {{
-                    container.innerHTML += `<div style="margin-left: 20px;">${{wt.name}} - ${{wt.quantity}} ${{wt.unit}}</div>`;
+            try {{
+                const res = await fetch(`/objects/${{OBJECT_ID}}/budget/tree/`);
+                if (!res.ok) throw new Error('Failed to load budget');
+                const stages = await res.json();
+                const container = document.getElementById('budget-container');
+                container.innerHTML = '<h3>Бюджет (только просмотр)</h3>';
+                
+                if (!stages || stages.length === 0) {{
+                    container.innerHTML += '<p style="color: #999; text-align: center; padding: 20px;">Нет данных</p>';
+                    return;
                 }}
+                
+                let totalBudget = 0;
+                stages.forEach(stage => {{
+                    let stageHtml = `<div style="margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                        <strong style="font-size: 16px; color: #333;">${{stage.name}}</strong>`;
+                    
+                    (stage.work_types || []).forEach(wt => {{
+                        let wtCost = 0;
+                        (wt.resources || []).forEach(res => {{
+                            wtCost += (res.quantity || 0) * (res.price || 0);
+                        }});
+                        totalBudget += wtCost;
+                        
+                        stageHtml += `<div style="margin: 10px 0 10px 20px; padding: 10px; background: white; border-left: 3px solid #2196F3;">
+                            <div style="font-weight: 500;">${{wt.name}}</div>
+                            <div style="font-size: 13px; color: #666;">${{wt.quantity || 0}} ${{wt.unit || 'шт'}} · ${{formatNumber(wtCost)}} сум</div>
+                        </div>`;
+                    }});
+                    
+                    stageHtml += '</div>';
+                    container.innerHTML += stageHtml;
+                }});
+                
+                container.innerHTML += `<div style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; text-align: center;">
+                    <strong style="font-size: 18px;">Общий бюджет: ${{formatNumber(totalBudget)}} сум</strong>
+                </div>`;
+            }} catch (err) {{
+                console.error('Error loading budget:', err);
+                document.getElementById('budget-container').innerHTML = '<p style="color: #999; padding: 20px;">Ошибка загрузки данных</p>';
             }}
         }}
         
         async function loadExpenses() {{
-            const container = document.getElementById('expense-container');
-            container.innerHTML = '<h3>Расходы (только просмотр)</h3><p>Данные загружаются...</p>';
+            try {{
+                const res = await fetch(`/objects/${{OBJECT_ID}}/expenses/tree`);
+                if (!res.ok) throw new Error('Failed to load expenses');
+                const stages = await res.json();
+                const container = document.getElementById('expense-container');
+                container.innerHTML = '<h3>Расходы (только просмотр)</h3>';
+                
+                if (!stages || stages.length === 0) {{
+                    container.innerHTML += '<p style="color: #999; text-align: center; padding: 20px;">Нет данных</p>';
+                    return;
+                }}
+                
+                let totalExpense = 0;
+                stages.forEach(stage => {{
+                    let stageHtml = `<div style="margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                        <strong style="font-size: 16px; color: #333;">${{stage.name}}</strong>`;
+                    
+                    (stage.work_types || []).forEach(wt => {{
+                        let wtExpense = 0;
+                        (wt.resources || []).forEach(res => {{
+                            (res.expenses || []).forEach(exp => {{
+                                wtExpense += (exp.actual_quantity || 0) * (exp.actual_price || 0);
+                            }});
+                        }});
+                        totalExpense += wtExpense;
+                        
+                        if (wtExpense > 0) {{
+                            stageHtml += `<div style="margin: 10px 0 10px 20px; padding: 10px; background: white; border-left: 3px solid #f44336;">
+                                <div style="font-weight: 500;">${{wt.name}}</div>
+                                <div style="font-size: 13px; color: #666;">Расход: ${{formatNumber(wtExpense)}} сум</div>
+                            </div>`;
+                        }}
+                    }});
+                    
+                    stageHtml += '</div>';
+                    container.innerHTML += stageHtml;
+                }});
+                
+                container.innerHTML += `<div style="margin-top: 20px; padding: 15px; background: #ffebee; border-radius: 8px; text-align: center;">
+                    <strong style="font-size: 18px;">Общий расход: ${{formatNumber(totalExpense)}} сум</strong>
+                </div>`;
+            }} catch (err) {{
+                console.error('Error loading expenses:', err);
+                document.getElementById('expense-container').innerHTML = '<p style="color: #999; padding: 20px;">Ошибка загрузки данных</p>';
+            }}
         }}
         
         async function loadAnalysis() {{
-            const res = await fetch(`/objects/${{OBJECT_ID}}/analysis`);
-            const data = await res.json();
-            const container = document.getElementById('analysis-container');
-            container.innerHTML = `
-                <h3>Анализ объекта</h3>
-                <p><strong>Общий приход:</strong> ${{formatNumber(data.total_income || 0)}} сум</p>
-                <p><strong>Общий расход:</strong> ${{formatNumber(data.total_expense || 0)}} сум</p>
-                <p><strong>Остаток:</strong> ${{formatNumber((data.total_income || 0) - (data.total_expense || 0))}} сум</p>
-            `;
+            try {{
+                // Загружаем все данные
+                const [budgetRes, incomeRes, expenseRes] = await Promise.all([
+                    fetch(`/objects/${{OBJECT_ID}}/budget/tree/`),
+                    fetch(`/objects/${{OBJECT_ID}}/incomes/`),
+                    fetch(`/objects/${{OBJECT_ID}}/expenses/tree`)
+                ]);
+                
+                const budgetData = budgetRes.ok ? await budgetRes.json() : [];
+                const incomeData = incomeRes.ok ? await incomeRes.json() : [];
+                const expenseData = expenseRes.ok ? await expenseRes.json() : [];
+                
+                // Считаем бюджет
+                let totalBudget = 0;
+                budgetData.forEach(stage => {{
+                    (stage.work_types || []).forEach(wt => {{
+                        (wt.resources || []).forEach(res => {{
+                            totalBudget += (res.quantity || 0) * (res.price || 0);
+                        }});
+                    }});
+                }});
+                
+                // Считаем приход
+                const totalIncome = incomeData.reduce((sum, item) => sum + (item.amount || 0), 0);
+                
+                // Считаем расход
+                let totalExpense = 0;
+                expenseData.forEach(stage => {{
+                    (stage.work_types || []).forEach(wt => {{
+                        (wt.resources || []).forEach(res => {{
+                            (res.expenses || []).forEach(exp => {{
+                                totalExpense += (exp.actual_quantity || 0) * (exp.actual_price || 0);
+                            }});
+                        }});
+                    }});
+                }});
+                
+                const balance = totalIncome - totalExpense;
+                const overrun = totalBudget - totalExpense;
+                
+                const container = document.getElementById('analysis-container');
+                container.innerHTML = `
+                    <div style="background: white; padding: 20px; border-radius: 8px;">
+                        <h3 style="margin-bottom: 20px; color: #333;">Финансовая сводка</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div style="padding: 15px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196F3;">
+                                <div style="font-size: 13px; color: #666; margin-bottom: 5px;">Бюджет</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #1976D2;">${{formatNumber(totalBudget)}} сум</div>
+                            </div>
+                            <div style="padding: 15px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4CAF50;">
+                                <div style="font-size: 13px; color: #666; margin-bottom: 5px;">Приход</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #388E3C;">${{formatNumber(totalIncome)}} сум</div>
+                            </div>
+                            <div style="padding: 15px; background: #ffebee; border-radius: 8px; border-left: 4px solid #f44336;">
+                                <div style="font-size: 13px; color: #666; margin-bottom: 5px;">Расход</div>
+                                <div style="font-size: 20px; font-weight: bold; color: #d32f2f;">${{formatNumber(totalExpense)}} сум</div>
+                            </div>
+                            <div style="padding: 15px; background: #fff3e0; border-radius: 8px; border-left: 4px solid #FF9800;">
+                                <div style="font-size: 13px; color: #666; margin-bottom: 5px;">Остаток</div>
+                                <div style="font-size: 20px; font-weight: bold; color: ${{balance >= 0 ? '#388E3C' : '#d32f2f'}};">${{formatNumber(balance)}} сум</div>
+                            </div>
+                            <div style="padding: 15px; background: #f3e5f5; border-radius: 8px; border-left: 4px solid #9C27B0;">
+                                <div style="font-size: 13px; color: #666; margin-bottom: 5px;">Перерасход</div>
+                                <div style="font-size: 20px; font-weight: bold; color: ${{overrun >= 0 ? '#388E3C' : '#d32f2f'}};">${{formatNumber(overrun)}} сум</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }} catch (err) {{
+                console.error('Error loading analysis:', err);
+                document.getElementById('analysis-container').innerHTML = '<p style="color: #999; padding: 20px;">Ошибка загрузки данных</p>';
+            }}
         }}
         
         function showPhoto(src) {{
