@@ -560,7 +560,7 @@ async def share_view(token: str):
         .btn-delete,
         .btn-icon,
         input[type="file"],
-        .modal,
+        .modal:not(#photo-modal),
         .sidebar,
         .sidebar-close,
         .sidebar-toggle,
@@ -568,9 +568,35 @@ async def share_view(token: str):
         .income-edit,
         .income-delete,
         .photo-overlay,
-        .tab-actions {{
+        .tab-actions,
+        .btn-save-row,
+        .btn-upload-photo,
+        .res-photo-delete,
+        .add-receipt-box,
+        .add-row,
+        button[title="Сохранить"],
+        button[title="Удалить фото"] {{
             display: none !important;
             visibility: hidden !important;
+        }}
+        
+        /* Allow photo modal for viewing */
+        #photo-modal {{
+            display: none;
+        }}
+        
+        /* Keep photo thumbnails visible for viewing (but clickable to open) */
+        .res-photo-thumb,
+        .res-photo-view,
+        .expense-photo-thumb,
+        .receipt-thumb-box {{
+            display: inline-block !important;
+            visibility: visible !important;
+            cursor: pointer !important;
+        }}
+        
+        .receipt-thumb-box.add-receipt-box {{
+            display: none !important;
         }}
         
         /* Disable editing on all text elements */
