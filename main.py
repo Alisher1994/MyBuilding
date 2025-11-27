@@ -654,6 +654,55 @@ async def share_view(token: str):
             padding: 24px;
         }}
         
+        /* Horizontal scroll for tables on mobile */
+        .income-table-wrap,
+        .budget-stage,
+        .budget-work-types-container,
+        .budget-resources-container,
+        .expense-resource-container,
+        .expense-history-table {{
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }}
+        
+        /* Ensure tables maintain their width */
+        .income-table,
+        .budget-work-type-header,
+        .budget-resource,
+        .expense-history-table table {{
+            min-width: 800px !important;
+        }}
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {{
+            .tab-content {{
+                padding: 12px;
+            }}
+            
+            /* Make all table containers scrollable */
+            .income-table-wrap,
+            .budget-stage,
+            .expense-resource-container {{
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                width: 100% !important;
+            }}
+            
+            /* Scrollbar styling for mobile */
+            .income-table-wrap::-webkit-scrollbar,
+            .budget-stage::-webkit-scrollbar,
+            .expense-resource-container::-webkit-scrollbar {{
+                height: 8px;
+            }}
+            
+            .income-table-wrap::-webkit-scrollbar-thumb,
+            .budget-stage::-webkit-scrollbar-thumb,
+            .expense-resource-container::-webkit-scrollbar-thumb {{
+                background: #888;
+                border-radius: 4px;
+            }}
+        }}
+        
         .readonly-banner {{
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
